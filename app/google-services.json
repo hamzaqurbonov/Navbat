@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "461867832807",
+    "firebase_url": "https://recyclerview-682ca-default-rtdb.firebaseio.com",
+    "project_id": "recyclerview-682ca",
+    "storage_bucket": "recyclerview-682ca.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:461867832807:android:c60ba1fa424407e5d49942",
+        "android_client_info": {
+          "package_name": "com.example.sartarosh"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3P4YgdjiX9dVQuIuYJ3FdAABoTEeMDSE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
