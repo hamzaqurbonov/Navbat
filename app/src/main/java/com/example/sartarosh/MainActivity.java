@@ -2,6 +2,9 @@ package com.example.sartarosh;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -19,13 +22,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
-
     FirebaseFirestore db = FirebaseFirestore.getInstance();
+    EditText edit_hour_id;
+    Button add_hour_id;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
+        edit_hour_id = findViewById(R.id.edit_hour_id);
+        add_hour_id = findViewById(R.id.add_hour_id);
+
 
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -34,15 +43,26 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        add_hour_id.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Db();
+                edit_hour_id.setText("");
+            }
+        });
 
 
-        // Create a new user with a first and last name
+
+    }
+
+    private void Db() {
+
         Map<String, Object> user = new HashMap<>();
-        user.put("first", "Ada");
-        user.put("last", "Lovelace");
-        user.put("born", 1815);
+        user.put("first", edit_hour_id.getText().toString());
+//        user.put("last", "Lovelace");
+//        user.put("born", 1815);
 
-// Add a new document with a generated ID
+
         db.collection("users")
                 .add(user)
                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
@@ -57,7 +77,13 @@ public class MainActivity extends AppCompatActivity {
                         Log.w("TAG", "Error adding document", e);
                     }
                 });
-
-
     }
+
+//
+//    private void AddButton() {
+//        add_hour_id.setOnClickListener(new View.OnClickListener() {
+//
+//        }
+//    }
+
 }

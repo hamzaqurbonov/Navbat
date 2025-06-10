@@ -6,12 +6,15 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
+import android.widget.EditText;
 
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 
 public class TimeSlotView extends View {
+
+    EditText edit_hour_id;
 
     static class TimeSlot {
         LocalTime start;
@@ -24,6 +27,8 @@ public class TimeSlotView extends View {
     }
 
     private final List<TimeSlot> busySlots = Arrays.asList(
+
+
             new TimeSlot(8, 0, 11, 0),
             new TimeSlot(12, 30, 13, 0),
             new TimeSlot(14, 0, 14, 40),
