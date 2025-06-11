@@ -14,7 +14,6 @@ import java.util.List;
 
 public class TimeSlotView extends View {
 
-    EditText edit_hour_id;
 
     static class TimeSlot {
         LocalTime start;

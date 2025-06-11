@@ -1,17 +1,23 @@
 package com.example.sartarosh;
 
 public class TimeModel {
-    private int hour;
+//    private int hour;
+    String first;
 
     public TimeModel() {
 
     }
 
-    public TimeModel(int hour) {
-        this.hour = hour;
+    public TimeModel( String first) {
+//        this.hour = hour;
+        this.first = first;
     }
 
-    public int getHour() {
-        return hour;
+//    public int getHour() {
+//        return hour;
+//    }
+
+    public String getFirst() {
+        return first;
     }
 }
