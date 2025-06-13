@@ -19,6 +19,8 @@ import androidx.appcompat.app.AppCompatActivity;
 //import androidx.core.view.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -48,6 +50,9 @@ public class MainActivity extends AppCompatActivity {
     private EditText edit_hour_id;
     private Button   add_hour_id;
     private TimeSlotView timeSlotView;
+    RecyclerView recycler;
+    MainAdapter adapter;
+    public List<TimeModel> activityList = new ArrayList<>();
 
     /* --------  Firestore  -------- */
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -61,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
         /* === Виджетлар === */
         edit_hour_id = findViewById(R.id.edit_hour_id);
         add_hour_id  = findViewById(R.id.add_hour_id);
+        recycler  = findViewById(R.id.recycler);
 
         /* === Custom View'ни динамик қўшамиз === */
         FrameLayout container = findViewById(R.id.schedule_container);   // activity_main.xml'даги FrameLayout
@@ -80,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
         /* === Кнопка: ёзиш → ўқиш → redraw === */
         add_hour_id.setOnClickListener(v -> {
             WriteDb();
+            activityList.clear();
             ReadDb();
             edit_hour_id.setText("");
         });
@@ -107,14 +114,22 @@ public class MainActivity extends AppCompatActivity {
     /* ------------------------------------------------------------
      * Firestore'дан ўқиб, TimeSlot рўйхатига парс қиламиз
      * ------------------------------------------------------------ */
-    private void ReadDb() {
+    public void ReadDb() {
         db.collection("users").get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         List<TimeSlotView.TimeSlot> list = new ArrayList<>();
 
                         for (QueryDocumentSnapshot doc : task.getResult()) {
-                            String raw = doc.getString("slot");      // "08:00-11:40"
+                            String raw = doc.getString("slot");
+
+                            Log.d("demo28", "users doc "  + doc.getId());
+
+                            activityList.add(new TimeModel(doc.getId(), raw));
+
+                            Log.d("demo1", "Added1: " + raw );
+
+                            // "08:00-11:40"
                             if (raw == null || !raw.contains("-")) continue;
 
                             try {
@@ -122,6 +137,8 @@ public class MainActivity extends AppCompatActivity {
                                 LocalTime start = LocalTime.parse(parts[0].trim());
                                 LocalTime end   = LocalTime.parse(parts[1].trim());
                                 list.add(new TimeSlotView.TimeSlot(start, end));
+
+                                Log.d("demo1", "Added: " + start + " " + end);
                             } catch (Exception e) {
                                 Log.w("Parse", "Bad slot: " + raw);
                             }
@@ -129,6 +146,14 @@ public class MainActivity extends AppCompatActivity {
 
                         /* --- Custom View'га юборамиз --- */
                         timeSlotView.setBusySlots(list);
+
+
+                        recycler.setLayoutManager(new GridLayoutManager(MainActivity.this, 1));
+
+                        adapter = new MainAdapter(MainActivity.this, activityList);
+                        recycler.setAdapter(adapter);
+
+
                     } else {
                         Log.e("ReadDb", "Error: ", task.getException());
                     }
