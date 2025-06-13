@@ -44,6 +44,7 @@ public class MainAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder>{
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         int pos = holder.getAdapterPosition();
+        if (pos == RecyclerView.NO_POSITION) return;
 
         ((HomeViewAdapterHolder) holder).TextViewName.setText(activityllist.get(position).getFirst());
 
@@ -51,47 +52,34 @@ public class MainAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder>{
         ((HomeViewAdapterHolder) holder).deleteSelect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
                 builder.setTitle("Matinni o'chirish");
                 builder.setMessage("Matinni o'chirishni istaysizmi?");
                 builder.setPositiveButton("Ha", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-
-
                         FirebaseFirestore db = FirebaseFirestore.getInstance();
-//                        String documentId = activityllist.get(position).getId();
 
-                        //              Delete fiuksiyasini qo'shish mumkun
-                        db.collection("users").document(activityllist.get(position).getDocid())
+                        // ✅ pos орқали ишлатинг
+                        db.collection("users").document(activityllist.get(pos).getDocid())
                                 .delete()
-                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                    @Override
-                                    public void onSuccess(Void aVoid) {
-                                    }
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(v.getContext(), "Matin o'chirildi!", Toast.LENGTH_SHORT).show();
+
+                                    activityllist.remove(pos);
+                                    notifyItemRemoved(pos);
+                                    notifyItemRangeChanged(pos, activityllist.size());
+
+                                    activityllist.clear();
+                                     mainActivity.ReadDb();
                                 })
-                                .addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                    }
+                                .addOnFailureListener(e -> {
+//                                    Log.e("DeleteError", "O'chirishda xatolik", e);
                                 });
-                        Toast.makeText(v.getContext(),  "Matin o'chirildi!", Toast.LENGTH_SHORT).show();
-
-                        // Refresh vazifasini bajaradi
-                        activityllist.remove(pos);
-                        notifyItemRemoved(pos);
-                        notifyItemRangeChanged(pos, activityllist.size());
-                        
-                        activityllist.clear();
-                    mainActivity.ReadDb();
                     }
                 });
-                builder.setNegativeButton("Yo'q", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-
-                    }
-                });
+                builder.setNegativeButton("Yo'q", null);
                 builder.create().show();
             }
         });
