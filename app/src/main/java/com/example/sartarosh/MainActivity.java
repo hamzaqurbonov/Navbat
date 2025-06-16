@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -47,7 +48,7 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
 
     /* --------  UI  -------- */
-    private EditText edit_hour_id;
+    private EditText edit_hour_id, edit_minut_id;
     private Button   add_hour_id;
     private TimeSlotView timeSlotView;
     RecyclerView recycler;
@@ -65,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
 
         /* === Виджетлар === */
         edit_hour_id = findViewById(R.id.edit_hour_id);
+        edit_minut_id = findViewById(R.id.edit_minut_id);
         add_hour_id  = findViewById(R.id.add_hour_id);
         recycler  = findViewById(R.id.recycler);
 
@@ -88,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
             WriteDb();
             activityList.clear();
             ReadDb();
-            edit_hour_id.setText("");
+
         });
 
         /* Илк бор ўқиб оламиз */
@@ -99,16 +101,56 @@ public class MainActivity extends AppCompatActivity {
      * Firestore'га ["HH:mm-HH:mm"] кўринишида ёзамиз
      * ------------------------------------------------------------ */
     private void WriteDb() {
-        // Масалан, EditText'га "08:00-11:40" ёки "12:20-13:00" ёзилган бўлади
         Map<String, Object> item = new HashMap<>();
-        item.put("slot", edit_hour_id.getText().toString());
+        String hourStr = edit_hour_id.getText().toString();
+        String hourMinut = edit_minut_id.getText().toString();
+
+        // Agar bo'sh bo'lsa, tekshir
+        if (hourStr.isEmpty()) return;
+        if (hourMinut.isEmpty()) return;
+
+        int hour = Integer.parseInt(hourStr);
+        int endtime = hour + 1;
+
+        int starMinut = Integer.parseInt(hourMinut);
+        int endMinut = starMinut + 40;
+        int realminutMinut;
+
+        // Soat 2 xonali ko'rinish uchun formatlash
+        String formattedStart = String.format("%02d", hour);
+        String formattedEnd = String.format("%02d", endtime);
+
+        // Minut 2 xonali ko'rinish uchun formatlash
+        String formattedStartMin = String.format("%02d", starMinut);
+        String formattedEndMin = String.format("%02d", endMinut);
+
+        if (starMinut>=60) {
+            Toast.makeText(this,  "Daqiqa kiritishda xatolik", Toast.LENGTH_SHORT).show();
+            return;
+        } if (endMinut>=59) {
+            realminutMinut =  endMinut - 60;
+            String formattedrealminutMinut = String.format("%02d", realminutMinut);
+
+            String slot = formattedStart + ":" + formattedStartMin + "-" + formattedEnd + ":" + formattedrealminutMinut ;
+            item.put("slot", slot);
+            Log.d("demo3", "if "  + realminutMinut);
+
+            edit_hour_id.setText("");
+            edit_minut_id.setText("");
+        }else {
+            String slot = formattedStart + ":" + formattedStartMin + "-" + formattedStart + ":" + formattedEndMin ;
+            item.put("slot", slot);
+            Log.d("demo3", "else "  + endMinut);
+            edit_hour_id.setText("");
+            edit_minut_id.setText("");
+        }
+
+
 
         db.collection("users")
                 .add(item)
-                .addOnSuccessListener(doc ->
-                        Log.d("TAG", "Added: " + doc.getId()))
-                .addOnFailureListener(e ->
-                        Log.w("TAG", "Error adding", e));
+                .addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId()))
+                .addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
     }
 
     /* ------------------------------------------------------------
