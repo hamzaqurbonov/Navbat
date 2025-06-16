@@ -43,8 +43,9 @@ public class MainAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder>{
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        int pos = holder.getAdapterPosition();
-        if (pos == RecyclerView.NO_POSITION) return;
+//        int pos = holder.getAdapterPosition();
+//        if (pos == RecyclerView.NO_POSITION) return;
+        String documentId = activityllist.get(position).getDocid();
 
         ((HomeViewAdapterHolder) holder).TextViewName.setText(activityllist.get(position).getFirst());
 
@@ -62,21 +63,25 @@ public class MainAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder>{
                         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
                         // ✅ pos орқали ишлатинг
-                        db.collection("users").document(activityllist.get(pos).getDocid())
+                        db.collection("users").document(documentId)
                                 .delete()
-                                .addOnSuccessListener(aVoid -> {
-                                    Toast.makeText(v.getContext(), "Matin o'chirildi!", Toast.LENGTH_SHORT).show();
-
-                                    activityllist.remove(pos);
-                                    notifyItemRemoved(pos);
-                                    notifyItemRangeChanged(pos, activityllist.size());
-
-                                    activityllist.clear();
-                                     mainActivity.ReadDb();
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Toast.makeText(v.getContext(), "Matin o'chirildi!", Toast.LENGTH_SHORT).show();
+                                    }
                                 })
-                                .addOnFailureListener(e -> {
-//                                    Log.e("DeleteError", "O'chirishda xatolik", e);
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Toast.makeText(v.getContext(), "Xatolik: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    }
                                 });
+
+                        activityllist.clear();
+                        mainActivity.ReadDb();
+
+
                     }
                 });
                 builder.setNegativeButton("Yo'q", null);
