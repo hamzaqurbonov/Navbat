@@ -44,6 +44,12 @@
             android:layout_height="wrap_content"
             android:text="Ro'yxatdan o'tish" />
 
+        <Button
+            android:id="@+id/google_signin_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="google_signin_btn" />
+
 
     </LinearLayout>
 

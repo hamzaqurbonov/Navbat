@@ -19,6 +19,7 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 //import androidx.core.view.Insets;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,9 +27,17 @@ import com.example.sartarosh.customer.CustomerActivity;
 import com.example.sartarosh.profil.BarberActivity;
 import com.example.sartarosh.profil.BarberProfile;
 import com.example.sartarosh.profil.LoginActivity;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
+import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -47,55 +56,33 @@ import java.util.Map;
  */
 public class MainActivity extends AppCompatActivity {
 
+    private static final int RC_SIGN_IN = 1001;
+    private FirebaseAuth mAuth;
+    private GoogleSignInClient mGoogleSignInClient;
 
-    FirebaseAuth mAuth;
+
+
     FirebaseFirestore db;
+
+    boolean isFirstLaunch;
+    SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
-        Log.d("demo7", "MainActivity 6");
 
-//        FirebaseUser currentUser = mAuth.getCurrentUser();
-
-//        if (currentUser == null) {
-//            Log.d("demo7", "LoginActivity 1");
-//            // Логин керак
-//            startActivity(new Intent(this, LoginActivity.class));
-//
-//            finish();
-//        } else {
-//            String uid = currentUser.getUid();
-//            // Автоматик сессия бор. Қайси профил эканини текширамиз:
-//            db.collection("Barbers").document(uid).get().addOnSuccessListener(doc -> {
-//                if (doc.exists()) {
-//                    Log.d("demo7", "BarberActivity 2");
-//                    // Сартарош экан
-//                    startActivity(new Intent(this, BarberActivity.class));
-//                } else {
-//                    Log.d("demo7", "CustomerActivity 3");
-//                    // Мижоз экан
-//                    startActivity(new Intent(this, CustomerActivity.class));
-//                }
-//                finish();
-//            }).addOnFailureListener(e -> {
-//                Toast.makeText(this, "Маълумот юкланмади", Toast.LENGTH_SHORT).show();
-//            });
-//        }
-
-
-        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
-        boolean isFirstLaunch = prefs.getBoolean("isFirstLaunch", true);
+        prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+        isFirstLaunch = prefs.getBoolean("isFirstLaunch", true);
 
         if (isFirstLaunch) {
-            // Иловани биринчи бор очиляпти - LoginActivity очилади
-            startActivity(new Intent(this, LoginActivity.class));
-
+            // Иловани биринчи бор очиляпти
+            setContentView(R.layout.activity_main);
+            findViewById(R.id.barber).setOnClickListener(v -> signIn());
+            findViewById(R.id.customer).setOnClickListener(v -> signIn());
             // Бошқа сафарда LoginActivity кўрсатилмаслиги учун белги қўямиз
             SharedPreferences.Editor editor = prefs.edit();
             editor.putBoolean("isFirstLaunch", false);
@@ -106,13 +93,77 @@ public class MainActivity extends AppCompatActivity {
             if (currentUser != null) {
                 startActivity(new Intent(this, CustomerActivity.class));
             } else {
-                startActivity(new Intent(this, LoginActivity.class));
+                setContentView(R.layout.activity_main);
+                findViewById(R.id.barber).setOnClickListener(v -> signIn());
+                findViewById(R.id.customer).setOnClickListener(v -> signIn());
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putBoolean("isFirstLaunch", false);
+                editor.apply();
+//                startActivity(new Intent(this, LoginActivity.class));
             }
         }
 
+        mAuth = FirebaseAuth.getInstance();
+
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id)) // google-services.json'dan
+                .requestEmail()
+                .build();
+
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+
+
+    }
+
+
+
+    private void Customer() {
+        startActivity(new Intent(this, LoginActivity.class));
         finish();
     }
 
+    private void Barber() {
+        startActivity(new Intent(this, BarberActivity.class));
+        finish();
+    }
+
+
+    private void signIn() {
+        Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+        startActivityForResult(signInIntent, RC_SIGN_IN);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == RC_SIGN_IN) {
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                firebaseAuthWithGoogle(account.getIdToken());
+            } catch (ApiException e) {
+                Toast.makeText(this, "Google sign-in failed", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void firebaseAuthWithGoogle(String idToken) {
+        AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        Toast.makeText(this, "Kirish muvaffaqiyatli", Toast.LENGTH_SHORT).show();
+
+                        // CustomerActivity'га ўтиш
+                        startActivity(new Intent(this, BarberActivity.class));
+                        finish();
+                    } else {
+                        Toast.makeText(this, "Authentication failed", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
 
 
 }
