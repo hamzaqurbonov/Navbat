@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.sartarosh.MainActivity;
 import com.example.sartarosh.R;
 import com.example.sartarosh.TimeModel;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -43,6 +44,9 @@ public class CustomerActivity extends AppCompatActivity {
     CustomerAdapter adapter;
     public List<TimeModel> activityList = new ArrayList<>();
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private FirebaseAuth mAuth;
+
+    String barbesid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,14 +59,20 @@ public class CustomerActivity extends AppCompatActivity {
 //            return insets;
 //        });
 
+
+                barbesid = getIntent().getExtras().getString("barbesid");
+
+
         /* === Виджетлар === */
         edit_hour_id = findViewById(R.id.edit_hour_id);
         edit_minut_id = findViewById(R.id.edit_minut_id);
         add_hour_id  = findViewById(R.id.add_hour_id);
         recycler  = findViewById(R.id.recycler);
 
+        mAuth = FirebaseAuth.getInstance();
+
         /* === Custom View'ни динамик қўшамиз === */
-        FrameLayout container = findViewById(R.id.schedule_container);   // activity_main.xml'даги FrameLayout
+        FrameLayout container = findViewById(R.id.schedule_container_barber);   // activity_main.xml'даги FrameLayout
         timeSlotView = new TimeSlotView(this);
         container.addView(timeSlotView,
                 new FrameLayout.LayoutParams(
@@ -130,9 +140,9 @@ public class CustomerActivity extends AppCompatActivity {
             edit_minut_id.setText("");
         }
 
+        String uid = mAuth.getCurrentUser().getUid();
 
-
-        db.collection("users")
+        db.collection("Barbers").document(uid).collection("customer")
                 .add(item)
                 .addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId()))
                 .addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
@@ -142,7 +152,9 @@ public class CustomerActivity extends AppCompatActivity {
      * Firestore'дан ўқиб, TimeSlot рўйхатига парс қиламиз
      * ------------------------------------------------------------ */
     public void ReadDb() {
-        db.collection("users").get()
+//        String uid = mAuth.getCurrentUser().getUid();
+
+        db.collection("Barbers").document(barbesid).collection("customer").get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         List<TimeSlotView.TimeSlot> list = new ArrayList<>();

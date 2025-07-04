@@ -26,13 +26,18 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class LoginActivity extends AppCompatActivity {
-
+    private EditText edit_name, edit_oblast, edit_region, edit_address, edit_phone, edit_phone2;
     private static final int RC_SIGN_IN = 1001;
     private FirebaseAuth mAuth;
     private GoogleSignInClient mGoogleSignInClient;
+    FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +50,16 @@ public class LoginActivity extends AppCompatActivity {
             return insets;
         });
 
+        // Ro'yxatdan o'tish
+        edit_name = findViewById(R.id.edit_name);
+        edit_oblast = findViewById(R.id.edit_oblast);
+        edit_region  = findViewById(R.id.edit_region);
+        edit_address  = findViewById(R.id.edit_address);
+        edit_phone  = findViewById(R.id.edit_phone);
+        edit_phone2  = findViewById(R.id.edit_phone2);
+        findViewById(R.id.google_signin_btn).setOnClickListener(v -> signIn());
+
+
         mAuth = FirebaseAuth.getInstance();
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -54,13 +69,44 @@ public class LoginActivity extends AppCompatActivity {
 
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        findViewById(R.id.google_signin_btn).setOnClickListener(v -> signIn());
+
     }
 
     private void signIn() {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
+
+
+
+
+
+
+
     }
+
+
+
+    private void register() {
+
+        String uid = mAuth.getCurrentUser().getUid();
+
+        String phone = edit_name.getText().toString();
+        String password = edit_oblast.getText().toString();
+
+        Map<String, Object> profile = new HashMap<>();
+        profile.put("name", phone);
+        profile.put("phone", password);
+
+        FirebaseFirestore.getInstance().collection("Barbers")
+                .document(uid)
+                .set(profile)
+                .addOnSuccessListener(unused -> {
+                    Log.d("Profile", "Saqlandi");
+                });
+    }
+
+
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -84,9 +130,9 @@ public class LoginActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         FirebaseUser user = mAuth.getCurrentUser();
                         Toast.makeText(this, "Kirish muvaffaqiyatli", Toast.LENGTH_SHORT).show();
-
+                        register();
                         // CustomerActivity'га ўтиш
-                        startActivity(new Intent(LoginActivity.this, CustomerActivity.class));
+                        startActivity(new Intent(LoginActivity.this, BarberActivity.class));
                         finish();
                     } else {
                         Toast.makeText(this, "Authentication failed", Toast.LENGTH_SHORT).show();

@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".LoginActivity">
+    tools:context=".profil.LoginActivity">
 
 
     <LinearLayout
@@ -19,36 +19,67 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <EditText
+            android:id="@+id/edit_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="F.I.O (to'liq kiriting)"
+            />
+        <EditText
+            android:id="@+id/edit_oblast"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="Viloyat"
+            />
+        <EditText
+            android:id="@+id/edit_region"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="Tuman"
+            />
+        <EditText
+            android:id="@+id/edit_address"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="ish manzili(mo'ljal)"
+            />
+
+        <EditText
             android:id="@+id/edit_phone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:hint="Telefon raqamingiz"
             android:inputType="phone" />
-
         <EditText
-            android:id="@+id/edit_password"
+            android:id="@+id/edit_phone2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="Parolingiz"
-            android:inputType="textPassword" />
+            android:hint="Qo'shimcha telefon"
+            android:inputType="phone" />
 
-        <Button
-            android:id="@+id/btn_login"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Kirish" />
+<!--        <EditText-->
+<!--            android:id="@+id/edit_password"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:hint="Parolingiz"-->
+<!--            android:inputType="textPassword" />-->
 
-        <Button
-            android:id="@+id/btn_register"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Ro'yxatdan o'tish" />
+<!--        <Button-->
+<!--            android:id="@+id/btn_login"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Kirish" />-->
+
+<!--        <Button-->
+<!--            android:id="@+id/btn_register"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Ro'yxatdan o'tish" />-->
 
         <Button
             android:id="@+id/google_signin_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="google_signin_btn" />
+            android:text="Ro'yhatdan o'tish" />
 
 
     </LinearLayout>

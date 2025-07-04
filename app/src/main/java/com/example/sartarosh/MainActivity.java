@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.sartarosh.customer.CustomerActivity;
+import com.example.sartarosh.customer.CustomerBarberActivity;
 import com.example.sartarosh.profil.BarberActivity;
 import com.example.sartarosh.profil.BarberProfile;
 import com.example.sartarosh.profil.LoginActivity;
@@ -48,22 +49,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Дастур: вақт интервалларини Firestore'га ёзиб/ўқиб,
- *          TimeSlotView'да банд (CYAN) ва бўш (GREEN) вақтларни кўрсатади.
- *
- *  minSdkVersion ≥ 26 (java.time)
- */
 public class MainActivity extends AppCompatActivity {
 
     private static final int RC_SIGN_IN = 1001;
     private FirebaseAuth mAuth;
     private GoogleSignInClient mGoogleSignInClient;
-
-
-
     FirebaseFirestore db;
-
     boolean isFirstLaunch;
     SharedPreferences prefs;
 
@@ -81,8 +72,8 @@ public class MainActivity extends AppCompatActivity {
         if (isFirstLaunch) {
             // Иловани биринчи бор очиляпти
             setContentView(R.layout.activity_main);
-            findViewById(R.id.barber).setOnClickListener(v -> signIn());
-            findViewById(R.id.customer).setOnClickListener(v -> signIn());
+            findViewById(R.id.barber).setOnClickListener(v -> Barber());
+            findViewById(R.id.customer).setOnClickListener(v -> Customer());
             // Бошқа сафарда LoginActivity кўрсатилмаслиги учун белги қўямиз
             SharedPreferences.Editor editor = prefs.edit();
             editor.putBoolean("isFirstLaunch", false);
@@ -91,11 +82,12 @@ public class MainActivity extends AppCompatActivity {
             // Илова аввал очилган — сессияга қараб навигация
             FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
             if (currentUser != null) {
-                startActivity(new Intent(this, CustomerActivity.class));
+                Log.d("TAG1", "onCreate: ");
+                startActivity(new Intent(this, BarberActivity.class));
             } else {
                 setContentView(R.layout.activity_main);
-                findViewById(R.id.barber).setOnClickListener(v -> signIn());
-                findViewById(R.id.customer).setOnClickListener(v -> signIn());
+                findViewById(R.id.barber).setOnClickListener(v -> Barber());
+                findViewById(R.id.customer).setOnClickListener(v -> Customer());
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putBoolean("isFirstLaunch", false);
                 editor.apply();
@@ -118,17 +110,19 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void Customer() {
-        startActivity(new Intent(this, LoginActivity.class));
-        finish();
+//        signIn();
+        startActivity(new Intent(this, CustomerBarberActivity.class));
+//        finish();
     }
 
     private void Barber() {
-        startActivity(new Intent(this, BarberActivity.class));
-        finish();
+//        signIn();
+        startActivity(new Intent(this, LoginActivity.class));
+//        finish();
     }
 
 
-    private void signIn() {
+    public void signIn() {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
