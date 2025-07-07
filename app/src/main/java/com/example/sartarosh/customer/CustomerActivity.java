@@ -142,10 +142,18 @@ public class CustomerActivity extends AppCompatActivity {
 
         String uid = mAuth.getCurrentUser().getUid();
 
-        db.collection("Barbers").document(uid).collection("customer")
-                .add(item)
-                .addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId()))
-                .addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
+        db.collection("Barbers")
+                .document(uid)
+                .collection("customer")
+                .document(barbesid)
+                .set(item)
+                .addOnSuccessListener(aVoid -> Log.d("TAG", "Document successfully written!"))
+                .addOnFailureListener(e -> Log.w("TAG", "Error writing document", e));
+
+//        db.collection("Barbers").document(uid).collection("customer")
+//                .add(item)
+//                .addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId()))
+//                .addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
     }
 
     /* ------------------------------------------------------------

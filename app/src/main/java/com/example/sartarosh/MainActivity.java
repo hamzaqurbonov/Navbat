@@ -111,53 +111,62 @@ public class MainActivity extends AppCompatActivity {
 
     private void Customer() {
 //        signIn();
-        startActivity(new Intent(this, CustomerBarberActivity.class));
+//        startActivity(new Intent(this, LoginActivity.class));
+        Log.d("TAG1", "onCreate: Customer");
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.putExtra("Customer", true);
+        startActivity(intent);
+
 //        finish();
     }
 
     private void Barber() {
 //        signIn();
-        startActivity(new Intent(this, LoginActivity.class));
+//        startActivity(new Intent(this, LoginActivity.class));
+        Log.d("TAG1", "onCreate: Barber");
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.putExtra("Customer", false);
+        startActivity(intent);
 //        finish();
     }
 
 
-    public void signIn() {
-        Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-        startActivityForResult(signInIntent, RC_SIGN_IN);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == RC_SIGN_IN) {
-            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-            try {
-                GoogleSignInAccount account = task.getResult(ApiException.class);
-                firebaseAuthWithGoogle(account.getIdToken());
-            } catch (ApiException e) {
-                Toast.makeText(this, "Google sign-in failed", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
-    private void firebaseAuthWithGoogle(String idToken) {
-        AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
-        mAuth.signInWithCredential(credential)
-                .addOnCompleteListener(this, task -> {
-                    if (task.isSuccessful()) {
-                        FirebaseUser user = mAuth.getCurrentUser();
-                        Toast.makeText(this, "Kirish muvaffaqiyatli", Toast.LENGTH_SHORT).show();
-
-                        // CustomerActivity'га ўтиш
-                        startActivity(new Intent(this, BarberActivity.class));
-                        finish();
-                    } else {
-                        Toast.makeText(this, "Authentication failed", Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
+//    public void signIn() {
+//        Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+//        startActivityForResult(signInIntent, RC_SIGN_IN);
+//    }
+//
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        super.onActivityResult(requestCode, resultCode, data);
+//
+//        if (requestCode == RC_SIGN_IN) {
+//            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+//            try {
+//                GoogleSignInAccount account = task.getResult(ApiException.class);
+//                firebaseAuthWithGoogle(account.getIdToken());
+//            } catch (ApiException e) {
+//                Toast.makeText(this, "Google sign-in failed", Toast.LENGTH_SHORT).show();
+//            }
+//        }
+//    }
+//
+//    private void firebaseAuthWithGoogle(String idToken) {
+//        AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
+//        mAuth.signInWithCredential(credential)
+//                .addOnCompleteListener(this, task -> {
+//                    if (task.isSuccessful()) {
+//                        FirebaseUser user = mAuth.getCurrentUser();
+//                        Toast.makeText(this, "Kirish muvaffaqiyatli", Toast.LENGTH_SHORT).show();
+//
+//                        // CustomerActivity'га ўтиш
+//                        startActivity(new Intent(this, BarberActivity.class));
+//                        finish();
+//                    } else {
+//                        Toast.makeText(this, "Authentication failed", Toast.LENGTH_SHORT).show();
+//                    }
+//                });
+//    }
 
 
 }
