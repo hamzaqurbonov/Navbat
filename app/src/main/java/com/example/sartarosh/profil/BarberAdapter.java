@@ -24,7 +24,6 @@ import java.util.List;
 public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder>{
 
     private BarberAdapter.RecyclerViewClickListner listner;
-    //    EditHameViewActivity homeViewActivity;
     List<TimeModel> activityllist ;
     private BarberActivity barberActivity;
 
@@ -32,7 +31,7 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
     public BarberAdapter( BarberActivity barberActivity , List<TimeModel> activityllist) {
         this.activityllist = activityllist;
         this.barberActivity = barberActivity;
-//            this.listner = listner;
+
     }
 
 
@@ -46,10 +45,8 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-//        int pos = holder.getAdapterPosition();
-//        if (pos == RecyclerView.NO_POSITION) return;
-        String documentId = activityllist.get(position).getDocid();
 
+        String documentId = activityllist.get(position).getDocid();
         ((BarberAdapter.HomeViewAdapterHolder) holder).TextViewName.setText(activityllist.get(position).getFirst());
 
 
@@ -82,7 +79,7 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
                                 });
 
                         activityllist.clear();
-                        barberActivity.ReadDb();
+                        barberActivity.readDb();
 
 
                     }

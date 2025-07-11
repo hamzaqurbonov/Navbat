@@ -48,125 +48,71 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int RC_SIGN_IN = 1001;
     private FirebaseAuth mAuth;
     private GoogleSignInClient mGoogleSignInClient;
-    FirebaseFirestore db;
-    boolean isFirstLaunch;
-    SharedPreferences prefs;
+    private SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+//        EdgeToEdge.enable(this);
 
         mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
-
         prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
-        isFirstLaunch = prefs.getBoolean("isFirstLaunch", true);
+        boolean isFirstLaunch = prefs.getBoolean("isFirstLaunch", true);
+
+        // Google Sign-In конфигурацияси
+        configureGoogleSignIn();
 
         if (isFirstLaunch) {
-            // Иловани биринчи бор очиляпти
-            setContentView(R.layout.activity_main);
-            findViewById(R.id.barber).setOnClickListener(v -> Barber());
-            findViewById(R.id.customer).setOnClickListener(v -> Customer());
-            // Бошқа сафарда LoginActivity кўрсатилмаслиги учун белги қўямиз
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putBoolean("isFirstLaunch", false);
-            editor.apply();
+            showRoleSelection(); // Мижоз ёки сартарош танланади
+            prefs.edit().putBoolean("isFirstLaunch", false).apply();
         } else {
-            // Илова аввал очилган — сессияга қараб навигация
-            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-            if (currentUser != null) {
-                Log.d("TAG1", "onCreate: ");
-                startActivity(new Intent(this, BarberActivity.class));
-            } else {
-                setContentView(R.layout.activity_main);
-                findViewById(R.id.barber).setOnClickListener(v -> Barber());
-                findViewById(R.id.customer).setOnClickListener(v -> Customer());
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putBoolean("isFirstLaunch", false);
-                editor.apply();
-//                startActivity(new Intent(this, LoginActivity.class));
-            }
+            navigateBasedOnSession();
         }
+    }
 
-        mAuth = FirebaseAuth.getInstance();
-
+    private void configureGoogleSignIn() {
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id)) // google-services.json'dan
+                .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
-
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
-
-
     }
 
+    private void showRoleSelection() {
+        setContentView(R.layout.activity_main);
+        findViewById(R.id.barber).setOnClickListener(v -> navigateToLogin(false));
+        findViewById(R.id.customer).setOnClickListener(v -> navigateToLogin(true));
+    }
 
+    private void navigateBasedOnSession() {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
 
-    private void Customer() {
-//        signIn();
-//        startActivity(new Intent(this, LoginActivity.class));
-        Log.d("TAG1", "onCreate: Customer");
+        if (currentUser != null) {
+            String role = SharedPreferencesUtil.getString(this, "CustomerMain", "");
+            Intent intent;
+            if ("CustomerMain".equals(role)) {
+                intent = new Intent(this, CustomerActivity.class);
+            } else {
+                intent = new Intent(this, BarberActivity.class);
+            }
+            startActivity(intent);
+            finish();
+        } else {
+            showRoleSelection(); // Агар логин бўлмаса — рол танлаш экрани
+        }
+    }
+
+    private void navigateToLogin(boolean isCustomer) {
         Intent intent = new Intent(this, LoginActivity.class);
-        intent.putExtra("Customer", true);
+        intent.putExtra("Customer", isCustomer);
         startActivity(intent);
-
-//        finish();
+        finish(); // login'dан кейин қайта келмаслиги учун
     }
-
-    private void Barber() {
-//        signIn();
-//        startActivity(new Intent(this, LoginActivity.class));
-        Log.d("TAG1", "onCreate: Barber");
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.putExtra("Customer", false);
-        startActivity(intent);
-//        finish();
-    }
-
-
-//    public void signIn() {
-//        Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-//        startActivityForResult(signInIntent, RC_SIGN_IN);
-//    }
-//
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//
-//        if (requestCode == RC_SIGN_IN) {
-//            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-//            try {
-//                GoogleSignInAccount account = task.getResult(ApiException.class);
-//                firebaseAuthWithGoogle(account.getIdToken());
-//            } catch (ApiException e) {
-//                Toast.makeText(this, "Google sign-in failed", Toast.LENGTH_SHORT).show();
-//            }
-//        }
-//    }
-//
-//    private void firebaseAuthWithGoogle(String idToken) {
-//        AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
-//        mAuth.signInWithCredential(credential)
-//                .addOnCompleteListener(this, task -> {
-//                    if (task.isSuccessful()) {
-//                        FirebaseUser user = mAuth.getCurrentUser();
-//                        Toast.makeText(this, "Kirish muvaffaqiyatli", Toast.LENGTH_SHORT).show();
-//
-//                        // CustomerActivity'га ўтиш
-//                        startActivity(new Intent(this, BarberActivity.class));
-//                        finish();
-//                    } else {
-//                        Toast.makeText(this, "Authentication failed", Toast.LENGTH_SHORT).show();
-//                    }
-//                });
-//    }
-
-
 }

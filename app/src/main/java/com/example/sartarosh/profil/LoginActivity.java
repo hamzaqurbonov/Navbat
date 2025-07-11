@@ -1,6 +1,7 @@
 package com.example.sartarosh.profil;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -16,6 +17,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.sartarosh.MainActivity;
 import com.example.sartarosh.R;
+import com.example.sartarosh.SharedPreferencesUtil;
 import com.example.sartarosh.customer.CustomerActivity;
 import com.example.sartarosh.customer.CustomerBarberActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -40,8 +42,6 @@ public class LoginActivity extends AppCompatActivity {
     private static final int RC_SIGN_IN = 1001;
     private FirebaseAuth mAuth;
     private GoogleSignInClient mGoogleSignInClient;
-    FirebaseFirestore db;
-
     boolean isCustomer;
 
     @Override
@@ -55,9 +55,7 @@ public class LoginActivity extends AppCompatActivity {
             return insets;
         });
 
-        isCustomer = getIntent().getBooleanExtra("Customer", false); // false - дефолт қиймат
-
-
+        isCustomer = getIntent().getBooleanExtra("Customer", false);
 
 
 
@@ -94,12 +92,6 @@ public class LoginActivity extends AppCompatActivity {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
 
-
-
-
-
-
-
     }
 
 
@@ -134,11 +126,7 @@ public class LoginActivity extends AppCompatActivity {
         }
 
 
-
-
     }
-
-
 
 
     @Override
@@ -164,13 +152,19 @@ public class LoginActivity extends AppCompatActivity {
                         FirebaseUser user = mAuth.getCurrentUser();
                         Toast.makeText(this, "Kirish muvaffaqiyatli", Toast.LENGTH_SHORT).show();
                         register();
+
                         // CustomerActivity'га ўтиш
                         if(isCustomer) {
+                            SharedPreferencesUtil.saveString(this, "CustomerMain", "CustomerMain");
+                            SharedPreferencesUtil.saveString(this, "CustomerID", user.getUid());
+
                             startActivity(new Intent(LoginActivity.this, CustomerBarberActivity.class));
-                            Toast.makeText(this, "Google sign-in failed 1", Toast.LENGTH_SHORT).show();
+
                         } else {
+
+
                             startActivity(new Intent(LoginActivity.this, BarberActivity.class));
-                            Toast.makeText(this, "Google sign-in failed 2", Toast.LENGTH_SHORT).show();
+
                         }
 
 

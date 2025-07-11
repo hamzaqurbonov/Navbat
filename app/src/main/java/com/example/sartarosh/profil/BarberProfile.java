@@ -26,5 +26,4 @@ public class BarberProfile {
         this.createdAt = createdAt;
     }
 
-    // Getters and setters (auto-generate in Android Studio)
 }

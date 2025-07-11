@@ -1,7 +1,9 @@
 package com.example.sartarosh.customer;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,6 +23,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.sartarosh.R;
+import com.example.sartarosh.SharedPreferencesUtil;
 import com.example.sartarosh.TimeModel;
 import com.example.sartarosh.profil.BarberActivity;
 import com.example.sartarosh.profil.LoginActivity;
@@ -33,29 +36,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CustomerBarberActivity extends AppCompatActivity {
-RecyclerView recycler;
-CustomerBarberAdapter adapter;
-List<CustomerModel> activityList = new ArrayList<>();
-private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-private FirebaseAuth mAuth;
+    RecyclerView recycler;
+    CustomerBarberAdapter adapter;
+    List<CustomerModel> activityList = new ArrayList<>();
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private FirebaseAuth mAuth;
+    String BarbesId;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+//        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_customer_barber);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-        recycler  = findViewById(R.id.recycler);
+//        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+//            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+//            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+//            return insets;
+//        });
+        recycler = findViewById(R.id.recycler);
         mAuth = FirebaseAuth.getInstance();
+
+
         ReadDb();
     }
 
     public void ReadDb() {
-//        String uid = mAuth.getCurrentUser().getUid();
 
         db.collection("Barbers").get()
                 .addOnCompleteListener(task -> {
@@ -69,11 +75,11 @@ private FirebaseAuth mAuth;
                             String phone = doc.getString("phone");
 
 
-                            Log.d("demo28", "users doc "  + barbesID);
+                            Log.d("demo28", "users doc " + barbesID);
 
                             activityList.add(new CustomerModel(name, phone, barbesID));
 
-                            Log.d("demo1", "Added1: " + name );
+                            Log.d("demo1", "Added1: " + name);
 
                         }
 
@@ -82,17 +88,18 @@ private FirebaseAuth mAuth;
                         adapter = new CustomerBarberAdapter(activityList, new CustomerBarberAdapter.RecyclerViewClickListner() {
                             @Override
                             public void onClick(View v, int position) {
-                               String barbesid = activityList.get(position).getBarbesId();
-                                String name = activityList.get(position).getName();
+                                String barbesid = activityList.get(position).getBarbesId();
+                                String getName = activityList.get(position).getName();
+                                String getPhone = activityList.get(position).getPhone();
 
                                 Intent intent = new Intent(CustomerBarberActivity.this, CustomerActivity.class);
-                                intent.putExtra("barbesid", barbesid);
+//
+                                SharedPreferencesUtil.saveString(CustomerBarberActivity.this, "BarbesID", barbesid);
+                                SharedPreferencesUtil.saveString(CustomerBarberActivity.this, "getName", getName);
+                                SharedPreferencesUtil.saveString(CustomerBarberActivity.this, "getPhone", getPhone);
+
+
                                 startActivity(intent);
-
-
-//                                startActivity(new Intent(CustomerBarberActivity.this, BarberActivity.class));
-
-//                                Toast.makeText(CustomerBarberActivity.this, "Tanlandi: " + name + " " + barbesid , Toast.LENGTH_SHORT).show();
                             }
                         });
 
@@ -103,7 +110,6 @@ private FirebaseAuth mAuth;
                     }
                 });
     }
-
 
 
 }
