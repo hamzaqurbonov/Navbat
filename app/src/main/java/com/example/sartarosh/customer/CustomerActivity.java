@@ -9,6 +9,8 @@ import android.graphics.Paint;
 import android.os.Bundle;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -18,7 +20,9 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -29,6 +33,8 @@ import com.example.sartarosh.MainActivity;
 import com.example.sartarosh.R;
 import com.example.sartarosh.SharedPreferencesUtil;
 import com.example.sartarosh.TimeModel;
+import com.example.sartarosh.profil.EditProfileActivity;
+import com.example.sartarosh.profil.LoginActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.FirebaseAuth;
@@ -52,12 +58,13 @@ public class CustomerActivity extends AppCompatActivity {
     private final List<TimeModel> activityList = new ArrayList<>();
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private FirebaseAuth mAuth;
+    Toolbar toolbar;
     private String barbershopId, customerId, customerName, customerPhone;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+//        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_customer);
 
         // Ma'lumotlarni SharedPreferences'dan olish
@@ -86,8 +93,45 @@ public class CustomerActivity extends AppCompatActivity {
         editMinute = findViewById(R.id.edit_minut_id);
         addHourBtn = findViewById(R.id.add_hour_id);
         backBtn = findViewById(R.id.back_Button);
-        logoutBtn = findViewById(R.id.custom_user_logput);
+//        logoutBtn = findViewById(R.id.custom_user_logput);
         recycler = findViewById(R.id.recycler);
+
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_profil, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.action_profile) {
+
+            startActivity(new Intent(CustomerActivity.this, EditProfileActivity.class));
+            return true;
+        } else if (id == R.id.action_logout) {
+            FirebaseAuth.getInstance().signOut();
+            GoogleSignIn.getClient(this, new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build()).signOut();
+
+            SharedPreferences.Editor editor = getSharedPreferences("app_prefs", MODE_PRIVATE).edit();
+            editor.clear().apply();
+
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     private void initListeners() {
@@ -102,21 +146,6 @@ public class CustomerActivity extends AppCompatActivity {
             finish();
         });
 
-        logoutBtn.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
-            GoogleSignIn.getClient(this, new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestIdToken(getString(R.string.default_web_client_id))
-                    .requestEmail()
-                    .build()).signOut();
-
-            SharedPreferences.Editor editor = getSharedPreferences("app_prefs", MODE_PRIVATE).edit();
-            editor.clear().apply();
-
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish();
-        });
     }
 
     private void WriteDb() {
@@ -195,8 +224,14 @@ public class CustomerActivity extends AppCompatActivity {
         private final Paint fill = new Paint();
         private final Paint label = new Paint();
 
-        public TimeSlotView(Context c) { this(c, null); }
-        public TimeSlotView(Context c, AttributeSet attrs) { this(c, attrs, 0); }
+        public TimeSlotView(Context c) {
+            this(c, null);
+        }
+
+        public TimeSlotView(Context c, AttributeSet attrs) {
+            this(c, attrs, 0);
+        }
+
         public TimeSlotView(Context c, AttributeSet attrs, int defStyle) {
             super(c, attrs, defStyle);
             label.setColor(Color.BLACK);
@@ -230,7 +265,11 @@ public class CustomerActivity extends AppCompatActivity {
 
         public static class TimeSlot {
             LocalTime start, end;
-            public TimeSlot(LocalTime s, LocalTime e) { start = s; end = e; }
+
+            public TimeSlot(LocalTime s, LocalTime e) {
+                start = s;
+                end = e;
+            }
         }
     }
 }

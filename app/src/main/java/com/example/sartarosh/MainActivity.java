@@ -111,6 +111,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void navigateToLogin(boolean isCustomer) {
         Intent intent = new Intent(this, LoginActivity.class);
+        SharedPreferencesUtil.clearAll(MainActivity.this);
+
+        if (isCustomer) {
+            SharedPreferencesUtil.saveString(this, "Customer", "Customer");
+        }
         intent.putExtra("Customer", isCustomer);
         startActivity(intent);
         finish(); // login'dан кейин қайта келмаслиги учун

@@ -15,6 +15,9 @@
         android:theme="@style/Theme.Sartarosh"
         tools:targetApi="31">
         <activity
+            android:name=".profil.EditProfileActivity"
+            android:exported="false" />
+        <activity
             android:name=".customer.CustomerBarberActivity"
             android:exported="false" />
 
@@ -30,9 +33,7 @@
             android:exported="false" />
         <activity
             android:name=".profil.LoginActivity"
-            android:exported="false">
-        </activity>
-
+            android:exported="false"></activity>
         <activity
             android:name=".MainActivity"
             android:exported="true">

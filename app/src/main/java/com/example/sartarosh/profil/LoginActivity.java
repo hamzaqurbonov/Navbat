@@ -161,10 +161,8 @@ public class LoginActivity extends AppCompatActivity {
                             startActivity(new Intent(LoginActivity.this, CustomerBarberActivity.class));
 
                         } else {
-
-
+                            SharedPreferencesUtil.saveString(this, "BarbesID", user.getUid());
                             startActivity(new Intent(LoginActivity.this, BarberActivity.class));
-
                         }
 
 

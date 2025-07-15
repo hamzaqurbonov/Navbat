@@ -3,19 +3,45 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginTop="50dp"
     android:background="#5FEBF8"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <ImageView
-        android:id="@+id/user_Button"
-        android:layout_width="35dp"
-        android:layout_height="28dp"
-        android:layout_margin="12dp"
-        android:src="@drawable/user_attributes_24px"
-        android:text="Бошқа"
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:menu="@menu/menu_profil"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+
+<!--        <ImageView-->
+<!--            android:id="@+id/back_Button"-->
+<!--            android:layout_width="35dp"-->
+<!--            android:layout_height="28dp"-->
+<!--            android:layout_margin="12dp"-->
+<!--            android:src="@drawable/baseline_arrow_back_24"-->
+<!--            android:text="Бошқа"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toTopOf="parent" />-->
+
+    </androidx.appcompat.widget.Toolbar>
+
+
+<!--    <ImageView-->
+<!--        android:id="@+id/user_Button"-->
+<!--        android:layout_width="35dp"-->
+<!--        android:layout_height="28dp"-->
+<!--        android:layout_margin="12dp"-->
+<!--        android:src="@drawable/user_attributes_24px"-->
+<!--        android:text="Бошқа"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="parent" />-->
 
     <LinearLayout
         android:id="@+id/linearLayoutbarber"
@@ -26,15 +52,15 @@
         android:padding="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@+id/toolbar">
 
         <EditText
             android:id="@+id/edit_hour_id_barber"
             android:layout_width="50dp"
             android:layout_height="wrap_content"
             android:hint="soat"
-            android:maxLength="2"
-            android:inputType="number" />
+            android:inputType="number"
+            android:maxLength="2" />
 
         <EditText
             android:id="@+id/edit_minut_id_barber"
@@ -43,8 +69,8 @@
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
             android:hint="daqiqa"
-            android:maxLength="2"
-            android:inputType="number" />
+            android:inputType="number"
+            android:maxLength="2" />
 
         <Button
             android:id="@+id/add_hour_id_barber"

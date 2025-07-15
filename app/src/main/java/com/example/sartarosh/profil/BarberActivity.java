@@ -9,6 +9,8 @@ import android.graphics.Paint;
 import android.os.Bundle;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -18,7 +20,9 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -29,6 +33,7 @@ import com.example.sartarosh.MainActivity;
 import com.example.sartarosh.R;
 import com.example.sartarosh.SharedPreferencesUtil;
 import com.example.sartarosh.TimeModel;
+import com.example.sartarosh.customer.CustomerActivity;
 import com.example.sartarosh.customer.CustomerBarberActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -53,11 +58,12 @@ public class BarberActivity extends AppCompatActivity {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private FirebaseAuth mAuth;
     private ImageView userButton;
+    Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+//        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_barber);
 
         mAuth = FirebaseAuth.getInstance();
@@ -65,16 +71,61 @@ public class BarberActivity extends AppCompatActivity {
         setupListeners();
         addTimeSlotView();
         readDb();
-        userButton.setOnClickListener(v -> logout());
+
+//        userButton.setOnClickListener(v -> logout());
     }
 
     private void initViews() {
         editHour = findViewById(R.id.edit_hour_id_barber);
         editMinute = findViewById(R.id.edit_minut_id_barber);
         addHourButton = findViewById(R.id.add_hour_id_barber);
-        userButton = findViewById(R.id.user_Button);
+//        userButton = findViewById(R.id.user_Button);
         recyclerView = findViewById(R.id.recycler_barber);
+
+
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+
     }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_profil, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.action_profile) {
+
+            startActivity(new Intent(BarberActivity.this, EditProfileActivity.class));
+            return true;
+        } else if (id == R.id.action_logout) {
+            FirebaseAuth.getInstance().signOut();
+            GoogleSignIn.getClient(this, new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build()).signOut();
+
+            SharedPreferences.Editor editor = getSharedPreferences("app_prefs", MODE_PRIVATE).edit();
+            editor.clear().apply();
+
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+
+
 
     private void setupListeners() {
         addHourButton.setOnClickListener(v -> {

@@ -56,10 +56,10 @@
             android:hint="Qo'shimcha telefon"
             android:inputType="phone" />
         <Button
-            android:id="@+id/google_signin_btn"
+            android:id="@+id/save_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ro'yhatdan o'tish" />
+            android:text="Saqlash" />
 
 
     </LinearLayout>
