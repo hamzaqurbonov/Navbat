@@ -62,7 +62,6 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
                     public void onClick(DialogInterface dialogInterface, int i) {
                         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-                        // ✅ pos орқали ишлатинг
                         db.collection("users").document(documentId)
                                 .delete()
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {

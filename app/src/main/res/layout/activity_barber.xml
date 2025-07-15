@@ -20,28 +20,7 @@
         app:menu="@menu/menu_profil"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
 
-<!--        <ImageView-->
-<!--            android:id="@+id/back_Button"-->
-<!--            android:layout_width="35dp"-->
-<!--            android:layout_height="28dp"-->
-<!--            android:layout_margin="12dp"-->
-<!--            android:src="@drawable/baseline_arrow_back_24"-->
-<!--            android:text="Бошқа"-->
-<!--            app:layout_constraintStart_toStartOf="parent"-->
-<!--            app:layout_constraintTop_toTopOf="parent" />-->
-
     </androidx.appcompat.widget.Toolbar>
-
-
-<!--    <ImageView-->
-<!--        android:id="@+id/user_Button"-->
-<!--        android:layout_width="35dp"-->
-<!--        android:layout_height="28dp"-->
-<!--        android:layout_margin="12dp"-->
-<!--        android:src="@drawable/user_attributes_24px"-->
-<!--        android:text="Бошқа"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
-<!--        app:layout_constraintTop_toTopOf="parent" />-->
 
     <LinearLayout
         android:id="@+id/linearLayoutbarber"
@@ -80,27 +59,25 @@
 
     </LinearLayout>
 
-
     <FrameLayout
         android:id="@+id/schedule_container_barber"
         android:layout_width="93dp"
-        android:layout_height="402dp"
+        android:layout_height="0dp"
         android:layout_marginStart="4dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/linearLayoutbarber"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_barber"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintHorizontal_bias="0.0"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         app:layout_constraintStart_toEndOf="@+id/schedule_container_barber"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayoutbarber" />
-
-
-
-
-
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayoutbarber"
+        app:layout_constraintBottom_toBottomOf="parent"
+        />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
