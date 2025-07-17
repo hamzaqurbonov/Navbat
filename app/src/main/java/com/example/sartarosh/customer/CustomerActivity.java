@@ -37,9 +37,19 @@ import com.example.sartarosh.profil.EditProfileActivity;
 import com.example.sartarosh.profil.LoginActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -86,6 +96,7 @@ public class CustomerActivity extends AppCompatActivity {
         ));
 
         ReadDb();
+//        versiyaSQL();
     }
 
     private void initViews() {
@@ -173,18 +184,86 @@ public class CustomerActivity extends AppCompatActivity {
         item.put("name", customerName);
         item.put("phone", customerPhone);
 
-        db.collection("Barbers").document(barbershopId).collection("Customer")
-                .document(customerId)
-                .set(item)
-                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Slot saved"))
-                .addOnFailureListener(e -> Log.w("Firestore", "Failed to save slot", e));
+//        db.collection("Barbers").document(barbershopId).collection("Customer")
+//                .document(customerId)
+//                .set(item)
+//                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Slot saved"))
+//                .addOnFailureListener(e -> Log.w("Firestore", "Failed to save slot", e));
+
+
+//        DocumentReference Data = db.collection("Barbers").document(barbershopId).collection("Customer").document(customerId);
+//        Data.update("key", FieldValue.arrayUnion(item));
+
+
+
+        db.collection("Barbers").document(barbershopId).collection("Customer1").document(customerId).collection("Customer2")
+                .add(item)
+                .addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId()))
+                .addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
 
         editHour.setText("");
         editMinute.setText("");
     }
 
     public void ReadDb() {
-        db.collection("Barbers").document(barbershopId).collection("Customer").get()
+
+//        db.collection("Barbers")
+//                .document(barbershopId)
+//                .collection("Customer")
+//                .document(customerId)
+//                .get()
+//                .addOnSuccessListener(documentSnapshot -> {
+//                    if (documentSnapshot.exists()) {
+//                        List<Map<String, Object>> keyList = (List<Map<String, Object>>) documentSnapshot.get("key");
+//
+//                        List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
+//                        activityList.clear();
+//
+//                        if (keyList != null) {
+//                            for (int i = 0; i < keyList.size(); i++) {
+//                                Map<String, Object> map = keyList.get(i);
+//
+//                                String name = (String) map.get("name");
+//                                String phone = (String) map.get("phone");
+//                                String slot = (String) map.get("slot"); // Slot format: "09:00 - 10:00"
+//
+//
+//                                activityList.add(new TimeModel(documentSnapshot.getId(), slot));
+//                                Log.d("demo55", "version: " + documentSnapshot.getId() + " " + slot);
+//
+//                                if (slot != null && slot.contains("-")) {
+//                                    try {
+//                                        String[] parts = slot.split("-");
+//                                        LocalTime start = LocalTime.parse(parts[0].trim());
+//                                        LocalTime end = LocalTime.parse(parts[1].trim());
+//                                        timeSlots.add(new TimeSlotView.TimeSlot(start, end));
+//                                    } catch (Exception e) {
+//                                        Log.w("ParseError", "Slot parsing failed: " + slot);
+//                                    }
+//                                }
+//                            }
+//
+//                            timeSlotView.setBusySlots(timeSlots);
+//                            recycler.setLayoutManager(new GridLayoutManager(this, 1));
+//                            adapter = new CustomerAdapter(this, activityList);
+//                            recycler.setAdapter(adapter);
+//
+//                        } else {
+//                            Log.d("KEY_MAP", "Key list is null in doc: " + customerId);
+//                        }
+//
+//                    } else {
+//                        Log.d("Firestore", "Document does not exist: " + customerId);
+//                    }
+//                })
+//                .addOnFailureListener(e -> {
+//                    Log.e("Firestore", "Failed to read customer data", e);
+//                });
+
+
+
+
+        db.collection("Barbers").document(barbershopId).collection("Customer1").document(customerId).collection("Customer2").get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful() && task.getResult() != null) {
                         List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
@@ -194,7 +273,7 @@ public class CustomerActivity extends AppCompatActivity {
                             String slot = doc.getString("slot");
                             if (slot == null || !slot.contains("-")) continue;
 
-                            activityList.add(new TimeModel(doc.getId(), slot));
+                            activityList.add(new TimeModel(barbershopId,customerId, doc.getId(), slot));
 
                             try {
                                 String[] parts = slot.split("-");
@@ -272,4 +351,70 @@ public class CustomerActivity extends AppCompatActivity {
             }
         }
     }
+
+
+//    private void versiyaSQL() {
+//        db.collection("Barbers")
+//                .document(barbershopId)
+//                .collection("Customer")
+//                .document(customerId)
+//                .get()
+//                .addOnSuccessListener(documentSnapshot -> {
+//                    if (documentSnapshot.exists()) {
+//                        List<Map<String, Object>> keyList = (List<Map<String, Object>>) documentSnapshot.get("key");
+//
+//                        List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
+//                        activityList.clear(); // TimeModel list
+//
+//                        if (keyList != null) {
+//                            for (int i = 0; i < keyList.size(); i++) {
+//                                Map<String, Object> map = keyList.get(i);
+//
+//                                String name = (String) map.get("name");
+//                                String phone = (String) map.get("phone");
+//                                String slot = (String) map.get("solt"); // Slot format: "09:00 - 10:00"
+//
+//
+//                                activityList.add(new TimeModel(barbershopId, customerId,slot));
+//
+//
+//                                if (slot != null && slot.contains("-")) {
+//                                    try {
+//                                        String[] parts = slot.split("-");
+//                                        LocalTime start = LocalTime.parse(parts[0].trim());
+//                                        LocalTime end = LocalTime.parse(parts[1].trim());
+//                                        timeSlots.add(new TimeSlotView.TimeSlot(start, end));
+//                                    } catch (Exception e) {
+//                                        Log.w("ParseError", "Slot parsing failed: " + slot);
+//                                    }
+//                                }
+//                            }
+//
+//                            timeSlotView.setBusySlots(timeSlots);
+//                            recycler.setLayoutManager(new GridLayoutManager(this, 1));
+//                            adapter = new CustomerAdapter(this, activityList);
+//                            recycler.setAdapter(adapter);
+//
+//                        } else {
+//                            Log.d("KEY_MAP", "Key list is null in doc: " + customerId);
+//                        }
+//
+//                    } else {
+//                        Log.d("Firestore", "Document does not exist: " + customerId);
+//                    }
+//                })
+//                .addOnFailureListener(e -> {
+//                    Log.e("Firestore", "Failed to read customer data", e);
+//                });
+//
+//
+//
+//
+//
+//
+//
+//
+//    }
+
+
 }

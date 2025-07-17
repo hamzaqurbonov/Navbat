@@ -215,7 +215,7 @@ public class BarberActivity extends AppCompatActivity {
                         String raw = doc.getString("slot");
                         if (raw == null || !raw.contains("-")) continue;
 
-                        activityList.add(new TimeModel(doc.getId(), raw));
+                        activityList.add(new TimeModel(doc.getId(),"", "", raw));
                         try {
                             String[] parts = raw.split("-");
                             LocalTime start = LocalTime.parse(parts[0].trim());

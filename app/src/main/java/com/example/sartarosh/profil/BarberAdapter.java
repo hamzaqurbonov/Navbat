@@ -46,7 +46,7 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
 
-        String documentId = activityllist.get(position).getDocid();
+        String documentId = activityllist.get(position).getBarbersId();
         ((BarberAdapter.HomeViewAdapterHolder) holder).TextViewName.setText(activityllist.get(position).getFirst());
 
 

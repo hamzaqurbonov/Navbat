@@ -2,6 +2,7 @@ package com.example.sartarosh.customer;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,13 +47,14 @@ public class CustomerAdapter extends RecyclerView.Adapter< RecyclerView.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-//        int pos = holder.getAdapterPosition();
-//        if (pos == RecyclerView.NO_POSITION) return;
-        String documentId = activityllist.get(position).getDocid();
+
+        String BarbersId = activityllist.get(position).getBarbersId();
+        String CustomerId = activityllist.get(position).getCustomerId();
+        String DocId = activityllist.get(position).getDocId();
 
         ((CustomerAdapter.HomeViewAdapterHolder) holder).TextViewName.setText(activityllist.get(position).getFirst());
 
-
+        Log.d("demo55", "version2: " + BarbersId + " - " + CustomerId + " - " + DocId);
         ((CustomerAdapter.HomeViewAdapterHolder) holder).deleteSelect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -65,8 +67,11 @@ public class CustomerAdapter extends RecyclerView.Adapter< RecyclerView.ViewHold
                     public void onClick(DialogInterface dialogInterface, int i) {
                         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-                        // ✅ pos орқали ишлатинг
-                        db.collection("users").document(documentId)
+
+
+
+                        db.collection("Barbers").document(BarbersId).collection("Customer1")
+                                .document(CustomerId).collection("Customer2").document(DocId)
                                 .delete()
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
