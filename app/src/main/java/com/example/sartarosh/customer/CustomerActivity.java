@@ -17,6 +17,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -29,6 +30,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.sartarosh.LocalDateTime;
 import com.example.sartarosh.MainActivity;
 import com.example.sartarosh.R;
 import com.example.sartarosh.SharedPreferencesUtil;
@@ -39,6 +41,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -69,7 +73,9 @@ public class CustomerActivity extends AppCompatActivity {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private FirebaseAuth mAuth;
     Toolbar toolbar;
+    String  data, dd, mm, yy;
     private String barbershopId, customerId, customerName, customerPhone;
+    TextView barbes_date_text, date_text, time_input_text;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,11 +101,96 @@ public class CustomerActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.MATCH_PARENT
         ));
 
+        dd = LocalDateTime.dateDD();
+        mm = LocalDateTime.dateMM();
+        yy = LocalDateTime.dateYYYY();
+        data = LocalDateTime.dateDDMMYY();
+
+        Log.d("demo56", "version: " +  dd + " - " + mm + " - " + yy + " - " + data );
+
         ReadDb();
-//        versiyaSQL();
+
+
+
+        findViewById(R.id.time_input).setOnClickListener(v -> timeInput() );
+
+
+//        MaterialTimePicker picker = new MaterialTimePicker.Builder()
+//                .setTimeFormat(TimeFormat.CLOCK_24H)
+//                .setHour(12)
+//                .setMinute(0)
+//                .setTitleText("Soatni tanlang")
+//                .build();
+//
+//        picker.show(getSupportFragmentManager(), "time_picker");
+//
+//        picker.addOnPositiveButtonClickListener(v -> {
+//            int hour = picker.getHour();
+//            int minute = picker.getMinute();
+//            // Bu yerda soat ва дақиқани ишлатинг
+//        });
+
+
+
+//        MaterialTimePicker picker = new MaterialTimePicker.Builder()
+//                .setTimeFormat(TimeFormat.CLOCK_24H)
+//                .setHour(12)
+//                .setMinute(0)
+//                .setTitleText("Вақтни танланг")
+//                .build();
+//
+//        picker.show(getSupportFragmentManager(), "time_picker");
+
+
+
+//        EditText timeInput = findViewById(R.id.time_input);
+//
+//        timeInput.setOnClickListener(v -> {
+//            MaterialTimePicker picker = new MaterialTimePicker.Builder()
+//                    .setTimeFormat(TimeFormat.CLOCK_24H)
+//                    .setHour(8)
+//                    .setMinute(0)
+//                    .setTitleText("Вақтни танланг")
+//                    .build();
+//
+//            picker.show(getSupportFragmentManager(), "tag");
+//
+//            picker.addOnPositiveButtonClickListener(dialog -> {
+//                int hour = picker.getHour();
+//                int minute = picker.getMinute();
+//                String formattedTime = String.format("%02d:%02d", hour, minute);
+//                timeInput.setText(formattedTime);
+//            });
+//        });
+
+
     }
 
+
+    private void timeInput() {
+        MaterialTimePicker picker = new MaterialTimePicker.Builder()
+                .setTimeFormat(TimeFormat.CLOCK_24H)
+                .setHour(0)
+                .setMinute(0)
+                .setTitleText("Soatni tanlang")
+                .build();
+
+        picker.show(getSupportFragmentManager(), "time_picker");
+
+        picker.addOnPositiveButtonClickListener(v -> {
+            int hour = picker.getHour();
+            int minute = picker.getMinute();
+
+            time_input_text.setText(hour + " "  +  minute );
+
+        });
+    }
+
+
     private void initViews() {
+        time_input_text = findViewById(R.id.time_input_text);
+        barbes_date_text = findViewById(R.id.barbes_date_text);
+        date_text = findViewById(R.id.date_text);
         editHour = findViewById(R.id.edit_hour_id);
         editMinute = findViewById(R.id.edit_minut_id);
         addHourBtn = findViewById(R.id.add_hour_id);
@@ -109,6 +200,9 @@ public class CustomerActivity extends AppCompatActivity {
 
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        barbes_date_text.setText(customerName );
+        date_text.setText("Bugun " + LocalDateTime.dateDDMMYY());
     }
 
     @Override
@@ -183,18 +277,8 @@ public class CustomerActivity extends AppCompatActivity {
         item.put("slot", slot);
         item.put("name", customerName);
         item.put("phone", customerPhone);
-
-//        db.collection("Barbers").document(barbershopId).collection("Customer")
-//                .document(customerId)
-//                .set(item)
-//                .addOnSuccessListener(aVoid -> Log.d("Firestore", "Slot saved"))
-//                .addOnFailureListener(e -> Log.w("Firestore", "Failed to save slot", e));
-
-
-//        DocumentReference Data = db.collection("Barbers").document(barbershopId).collection("Customer").document(customerId);
-//        Data.update("key", FieldValue.arrayUnion(item));
-
-
+        item.put("data", data);
+        item.put("day-time", dd);
 
         db.collection("Barbers").document(barbershopId).collection("Customer1").document(customerId).collection("Customer2")
                 .add(item)
@@ -206,64 +290,10 @@ public class CustomerActivity extends AppCompatActivity {
     }
 
     public void ReadDb() {
-
-//        db.collection("Barbers")
-//                .document(barbershopId)
-//                .collection("Customer")
-//                .document(customerId)
-//                .get()
-//                .addOnSuccessListener(documentSnapshot -> {
-//                    if (documentSnapshot.exists()) {
-//                        List<Map<String, Object>> keyList = (List<Map<String, Object>>) documentSnapshot.get("key");
-//
-//                        List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
-//                        activityList.clear();
-//
-//                        if (keyList != null) {
-//                            for (int i = 0; i < keyList.size(); i++) {
-//                                Map<String, Object> map = keyList.get(i);
-//
-//                                String name = (String) map.get("name");
-//                                String phone = (String) map.get("phone");
-//                                String slot = (String) map.get("slot"); // Slot format: "09:00 - 10:00"
-//
-//
-//                                activityList.add(new TimeModel(documentSnapshot.getId(), slot));
-//                                Log.d("demo55", "version: " + documentSnapshot.getId() + " " + slot);
-//
-//                                if (slot != null && slot.contains("-")) {
-//                                    try {
-//                                        String[] parts = slot.split("-");
-//                                        LocalTime start = LocalTime.parse(parts[0].trim());
-//                                        LocalTime end = LocalTime.parse(parts[1].trim());
-//                                        timeSlots.add(new TimeSlotView.TimeSlot(start, end));
-//                                    } catch (Exception e) {
-//                                        Log.w("ParseError", "Slot parsing failed: " + slot);
-//                                    }
-//                                }
-//                            }
-//
-//                            timeSlotView.setBusySlots(timeSlots);
-//                            recycler.setLayoutManager(new GridLayoutManager(this, 1));
-//                            adapter = new CustomerAdapter(this, activityList);
-//                            recycler.setAdapter(adapter);
-//
-//                        } else {
-//                            Log.d("KEY_MAP", "Key list is null in doc: " + customerId);
-//                        }
-//
-//                    } else {
-//                        Log.d("Firestore", "Document does not exist: " + customerId);
-//                    }
-//                })
-//                .addOnFailureListener(e -> {
-//                    Log.e("Firestore", "Failed to read customer data", e);
-//                });
-
-
-
-
-        db.collection("Barbers").document(barbershopId).collection("Customer1").document(customerId).collection("Customer2").get()
+        db.collection("Barbers").document(barbershopId).collection("Customer1").document(customerId).collection("Customer2")
+                .whereGreaterThanOrEqualTo("day-time", dd)
+                .whereLessThanOrEqualTo("day-time",  dd + "\uf8ff")
+                .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful() && task.getResult() != null) {
                         List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
@@ -351,70 +381,5 @@ public class CustomerActivity extends AppCompatActivity {
             }
         }
     }
-
-
-//    private void versiyaSQL() {
-//        db.collection("Barbers")
-//                .document(barbershopId)
-//                .collection("Customer")
-//                .document(customerId)
-//                .get()
-//                .addOnSuccessListener(documentSnapshot -> {
-//                    if (documentSnapshot.exists()) {
-//                        List<Map<String, Object>> keyList = (List<Map<String, Object>>) documentSnapshot.get("key");
-//
-//                        List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
-//                        activityList.clear(); // TimeModel list
-//
-//                        if (keyList != null) {
-//                            for (int i = 0; i < keyList.size(); i++) {
-//                                Map<String, Object> map = keyList.get(i);
-//
-//                                String name = (String) map.get("name");
-//                                String phone = (String) map.get("phone");
-//                                String slot = (String) map.get("solt"); // Slot format: "09:00 - 10:00"
-//
-//
-//                                activityList.add(new TimeModel(barbershopId, customerId,slot));
-//
-//
-//                                if (slot != null && slot.contains("-")) {
-//                                    try {
-//                                        String[] parts = slot.split("-");
-//                                        LocalTime start = LocalTime.parse(parts[0].trim());
-//                                        LocalTime end = LocalTime.parse(parts[1].trim());
-//                                        timeSlots.add(new TimeSlotView.TimeSlot(start, end));
-//                                    } catch (Exception e) {
-//                                        Log.w("ParseError", "Slot parsing failed: " + slot);
-//                                    }
-//                                }
-//                            }
-//
-//                            timeSlotView.setBusySlots(timeSlots);
-//                            recycler.setLayoutManager(new GridLayoutManager(this, 1));
-//                            adapter = new CustomerAdapter(this, activityList);
-//                            recycler.setAdapter(adapter);
-//
-//                        } else {
-//                            Log.d("KEY_MAP", "Key list is null in doc: " + customerId);
-//                        }
-//
-//                    } else {
-//                        Log.d("Firestore", "Document does not exist: " + customerId);
-//                    }
-//                })
-//                .addOnFailureListener(e -> {
-//                    Log.e("Firestore", "Failed to read customer data", e);
-//                });
-//
-//
-//
-//
-//
-//
-//
-//
-//    }
-
 
 }

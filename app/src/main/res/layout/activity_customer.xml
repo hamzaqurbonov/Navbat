@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
 
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
   >
@@ -18,27 +19,73 @@
         app:menu="@menu/menu_profil"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
 
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
             <ImageView
                 android:id="@+id/back_Button"
                 android:layout_width="35dp"
                 android:layout_height="28dp"
-                android:layout_margin="12dp"
-                android:src="@drawable/baseline_arrow_back_24"
-                android:text="Бошқа"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="0dp"
+                android:src="@drawable/baseline_arrow_back_24" />
+
+            <TextView
+                android:id="@+id/page"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Buyurtma berish oynasi"
+                android:textColor="@color/purple_500"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_centerInParent="true" />
+        </RelativeLayout>
 
     </androidx.appcompat.widget.Toolbar>
 
     <LinearLayout
+        android:id="@+id/linearLayout2"
+        android:layout_width="150dp"
+        android:layout_height="80dp"
+        android:layout_marginStart="5dp"
+        android:orientation="vertical"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar">
+
+        <TextView
+            android:id="@+id/barbes_date_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sartarosh"
+            android:textColor="@color/purple_500"
+            android:layout_marginTop="4dp"
+            android:textSize="14sp"
+            android:textStyle="italic"
+            android:layout_centerInParent="true" />
+
+        <TextView
+            android:id="@+id/date_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sana"
+            android:textColor="@color/purple_500"
+            android:layout_marginTop="5dp"
+            android:textSize="14sp"
+            android:textStyle="italic"
+            android:layout_centerInParent="true" />
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/linearLayout"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:padding="16dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/linearLayout2"
         app:layout_constraintTop_toBottomOf="@+id/toolbar">
 
 
@@ -65,12 +112,53 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Add" />
+
+        <Button
+            android:id="@+id/time_input"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add" />
+
+        <TextView
+            android:id="@+id/time_input_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sana"
+            android:textColor="@color/purple_500"
+            android:layout_marginTop="5dp"
+            android:textSize="14sp"
+            android:textStyle="italic"
+            android:layout_centerInParent="true" />
+
+        <!--        <com.google.android.material.timepicker.TimePickerView-->
+<!--            android:id="@+id/timePickerView"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_gravity="center"-->
+<!--            app:clockFace="true"-->
+<!--            app:clockHandColor="@color/black"-->
+<!--            app:clockNumberTextColor="@color/black" />-->
+
+<!--        <com.google.android.material.timepicker.TimePickerView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content" />-->
+
+
+
+<!--        <EditText-->
+<!--            android:id="@+id/time_input"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:focusable="false"-->
+<!--            android:hint="Вақт танланг"-->
+<!--            android:inputType="none"-->
+<!--            />-->
     </LinearLayout>
 
 
     <FrameLayout
         android:id="@+id/schedule_container_barber"
-        android:layout_width="93dp"
+        android:layout_width="100dp"
         android:layout_height="0dp"
         android:layout_marginStart="4dp"
         app:layout_constraintStart_toStartOf="parent"
