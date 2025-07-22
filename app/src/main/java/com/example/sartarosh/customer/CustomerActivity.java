@@ -1,27 +1,37 @@
 package com.example.sartarosh.customer;
 
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.icu.util.Calendar;
 import android.os.Bundle;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.Spinner;
+
+
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.graphics.Insets;
@@ -34,6 +44,7 @@ import com.example.sartarosh.LocalDateTime;
 import com.example.sartarosh.MainActivity;
 import com.example.sartarosh.R;
 import com.example.sartarosh.SharedPreferencesUtil;
+import com.example.sartarosh.SpinnerAdapter;
 import com.example.sartarosh.TimeModel;
 import com.example.sartarosh.profil.EditProfileActivity;
 import com.example.sartarosh.profil.LoginActivity;
@@ -41,6 +52,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.auth.FirebaseAuth;
@@ -57,8 +69,10 @@ import org.json.JSONObject;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class CustomerActivity extends AppCompatActivity {
@@ -73,9 +87,10 @@ public class CustomerActivity extends AppCompatActivity {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private FirebaseAuth mAuth;
     Toolbar toolbar;
-    String  data, dd, mm, yy;
+    String  data, dd, mm, yy, min, hours;
     private String barbershopId, customerId, customerName, customerPhone;
     TextView barbes_date_text, date_text, time_input_text;
+    Spinner spinner_min, spinner_hours;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,7 +105,7 @@ public class CustomerActivity extends AppCompatActivity {
         customerPhone = SharedPreferencesUtil.getString(this, "getPhone", "");
 
         initViews();
-        initListeners();
+//        initListeners();
 
         mAuth = FirebaseAuth.getInstance();
 
@@ -110,99 +125,99 @@ public class CustomerActivity extends AppCompatActivity {
 
         ReadDb();
 
-
-
-        findViewById(R.id.time_input).setOnClickListener(v -> timeInput() );
-
-
-//        MaterialTimePicker picker = new MaterialTimePicker.Builder()
-//                .setTimeFormat(TimeFormat.CLOCK_24H)
-//                .setHour(12)
-//                .setMinute(0)
-//                .setTitleText("Soatni tanlang")
-//                .build();
-//
-//        picker.show(getSupportFragmentManager(), "time_picker");
-//
-//        picker.addOnPositiveButtonClickListener(v -> {
-//            int hour = picker.getHour();
-//            int minute = picker.getMinute();
-//            // Bu yerda soat ва дақиқани ишлатинг
-//        });
-
-
-
-//        MaterialTimePicker picker = new MaterialTimePicker.Builder()
-//                .setTimeFormat(TimeFormat.CLOCK_24H)
-//                .setHour(12)
-//                .setMinute(0)
-//                .setTitleText("Вақтни танланг")
-//                .build();
-//
-//        picker.show(getSupportFragmentManager(), "time_picker");
-
-
-
-//        EditText timeInput = findViewById(R.id.time_input);
-//
-//        timeInput.setOnClickListener(v -> {
-//            MaterialTimePicker picker = new MaterialTimePicker.Builder()
-//                    .setTimeFormat(TimeFormat.CLOCK_24H)
-//                    .setHour(8)
-//                    .setMinute(0)
-//                    .setTitleText("Вақтни танланг")
-//                    .build();
-//
-//            picker.show(getSupportFragmentManager(), "tag");
-//
-//            picker.addOnPositiveButtonClickListener(dialog -> {
-//                int hour = picker.getHour();
-//                int minute = picker.getMinute();
-//                String formattedTime = String.format("%02d:%02d", hour, minute);
-//                timeInput.setText(formattedTime);
-//            });
-//        });
+        findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet() );
 
 
     }
 
+    private void showMaterialTimeBottomSheet() {
+        // BottomSheetDialog яратиш
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View bottomSheetView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_time_picker, null, false);
+        bottomSheetDialog.setContentView(bottomSheetView);
 
-    private void timeInput() {
-        MaterialTimePicker picker = new MaterialTimePicker.Builder()
-                .setTimeFormat(TimeFormat.CLOCK_24H)
-                .setHour(0)
-                .setMinute(0)
-                .setTitleText("Soatni tanlang")
-                .build();
+        // Spinner'ни view орқали оламиз (ЭЪТИБОР БЕРИН!)
+        spinner_min = bottomSheetView.findViewById(R.id.spinner_min);
+        spinner_hours = bottomSheetView.findViewById(R.id.spinner_hours);
 
-        picker.show(getSupportFragmentManager(), "time_picker");
 
-        picker.addOnPositiveButtonClickListener(v -> {
-            int hour = picker.getHour();
-            int minute = picker.getMinute();
+        if (spinner_hours != null) {
 
-            time_input_text.setText(hour + " "  +  minute );
+            String[] spinner_hours_list = {"08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"};
+            SpinnerAdapter adapter_hours = new SpinnerAdapter(this, Arrays.asList(spinner_hours_list), R.layout.spinner);
+            spinner_hours.setAdapter(adapter_hours);
+            spinner_hours.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                    String selectedOption = parentView.getItemAtPosition(position).toString();
+                    hours = selectedOption;
+                }
 
-        });
+                @Override
+                public void onNothingSelected(AdapterView<?> parentView) {
+                }
+            });
+
+        }
+        if (spinner_min != null) {
+
+            // SpinnerAdapter тайинлаш
+            String[] spinner_young_list = {"00", "10", "20", "30", "40", "50"};
+            SpinnerAdapter adapter_young = new SpinnerAdapter(this, Arrays.asList(spinner_young_list), R.layout.spinner);
+            spinner_min.setAdapter(adapter_young);
+            spinner_min.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                    String selectedOption = parentView.getItemAtPosition(position).toString();
+                    min = selectedOption;
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parentView) {
+                }
+            });
+        } else {
+//            Log.w("ParseError", "Slot parsing failed: " + slot);
+        }
+
+        // OK тугма
+        Button okButton = bottomSheetView.findViewById(R.id.btn_ok);
+        if (okButton != null) {
+
+
+            okButton.setOnClickListener(v -> {
+                WriteDb();
+                activityList.clear();
+                ReadDb();
+                bottomSheetDialog.dismiss();
+            });
+        }
+
+        bottomSheetDialog.show();
     }
+
+
 
 
     private void initViews() {
-        time_input_text = findViewById(R.id.time_input_text);
+//        time_input_text = findViewById(R.id.time_input_text);
         barbes_date_text = findViewById(R.id.barbes_date_text);
         date_text = findViewById(R.id.date_text);
-        editHour = findViewById(R.id.edit_hour_id);
-        editMinute = findViewById(R.id.edit_minut_id);
-        addHourBtn = findViewById(R.id.add_hour_id);
+//        editHour = findViewById(R.id.edit_hour_id);
+//        editMinute = findViewById(R.id.edit_minut_id);
+//        addHourBtn = findViewById(R.id.add_hour_id);
         backBtn = findViewById(R.id.back_Button);
 //        logoutBtn = findViewById(R.id.custom_user_logput);
         recycler = findViewById(R.id.recycler);
+
 
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         barbes_date_text.setText(customerName );
         date_text.setText("Bugun " + LocalDateTime.dateDDMMYY());
+
+
     }
 
     @Override
@@ -242,6 +257,7 @@ public class CustomerActivity extends AppCompatActivity {
     private void initListeners() {
         addHourBtn.setOnClickListener(v -> {
             WriteDb();
+            Log.d("demo20", "Slot parsing failed: " + hours + " " + min );
             activityList.clear();
             ReadDb();
         });
@@ -252,10 +268,11 @@ public class CustomerActivity extends AppCompatActivity {
         });
 
     }
-
+//    String hourStr = "spinner_min.toString().trim()";
+//    String minuteStr = "spinner_hours.toString().trim()";
     private void WriteDb() {
-        String hourStr = editHour.getText().toString().trim();
-        String minuteStr = editMinute.getText().toString().trim();
+        String hourStr = hours.toString();
+        String minuteStr = min.toString();
 
         if (hourStr.isEmpty() || minuteStr.isEmpty()) return;
 
@@ -285,8 +302,8 @@ public class CustomerActivity extends AppCompatActivity {
                 .addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId()))
                 .addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
 
-        editHour.setText("");
-        editMinute.setText("");
+//        editHour.setText("");
+//        editMinute.setText("");
     }
 
     public void ReadDb() {
