@@ -30,7 +30,10 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Transaction;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,6 +46,9 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private GoogleSignInClient mGoogleSignInClient;
     boolean isCustomer;
+    Map<String, Object> profile = new HashMap<>();
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,23 +64,20 @@ public class LoginActivity extends AppCompatActivity {
         isCustomer = getIntent().getBooleanExtra("Customer", false);
 
 
-
         // Ro'yxatdan o'tish
         edit_name = findViewById(R.id.edit_name);
         edit_oblast = findViewById(R.id.edit_oblast);
-        edit_region  = findViewById(R.id.edit_region);
-        edit_address  = findViewById(R.id.edit_address);
-        edit_phone  = findViewById(R.id.edit_phone);
-        edit_phone2  = findViewById(R.id.edit_phone2);
+        edit_region = findViewById(R.id.edit_region);
+        edit_address = findViewById(R.id.edit_address);
+        edit_phone = findViewById(R.id.edit_phone);
+        edit_phone2 = findViewById(R.id.edit_phone2);
         findViewById(R.id.google_signin_btn).setOnClickListener(v -> signIn());
 
-        if(isCustomer) {
+        if (isCustomer) {
             edit_oblast.setVisibility(View.GONE);
             edit_region.setVisibility(View.GONE);
             edit_address.setVisibility(View.GONE);
         }
-
-
 
         mAuth = FirebaseAuth.getInstance();
 
@@ -95,37 +98,59 @@ public class LoginActivity extends AppCompatActivity {
     }
 
 
-
     private void register() {
-
         String uid = mAuth.getCurrentUser().getUid();
+        String name = edit_name.getText().toString();
+        String phone = edit_phone.getText().toString();
 
-        String phone = edit_name.getText().toString();
-        String password = edit_oblast.getText().toString();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference userRef = isCustomer
+                ? db.collection("Customer").document(uid)
+                : db.collection("Barbers").document(uid);
 
-        Map<String, Object> profile = new HashMap<>();
-        profile.put("name", phone);
-        profile.put("phone", password);
+        // 1. Аввал мавжуд user ҳужжатини текширамиз
+        userRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists() && documentSnapshot.contains("userID")) {
+                // 🔁 Аллақачон ID берилган — қайта яратмаймиз
+                Log.d("REGISTER", "Мавжуд userID: " + documentSnapshot.getString("userID"));
+            } else {
+                // ✳️ Янги user учун ID яратиш
+                DocumentReference counterRef = db.collection("UserID").document("users_counter");
 
+                db.runTransaction((Transaction.Function<Void>) transaction -> {
+                    DocumentSnapshot snapshot = transaction.get(counterRef);
+                    long lastId = snapshot.contains("last_id") ? snapshot.getLong("last_id") : 0;
+                    long newId = lastId + 1;
+                    String formattedId = String.format("%05d", newId); // 00001, 00002, ...
 
+                    Map<String, Object> profile = new HashMap<>();
+                    profile.put("userID", formattedId);
+                    profile.put("name", name);
+                    profile.put("phone", phone);
 
-        if(isCustomer) {
-            FirebaseFirestore.getInstance().collection("Customer")
-                    .document(uid)
-                    .set(profile)
-                    .addOnSuccessListener(unused -> {
-                        Log.d("Profile", "Saqlandi");
-                    });
-        } else {
-            FirebaseFirestore.getInstance().collection("Barbers")
-                    .document(uid)
-                    .set(profile)
-                    .addOnSuccessListener(unused -> {
-                        Log.d("Profile", "Saqlandi");
-                    });
-        }
+                    // Qo'shimcha ma'lumotlar (agar kerak bo'lsa)
+//                    if (!isCustomer) {
+//                        profile.put("oblast", edit_oblast.getText().toString());
+//                        profile.put("region", edit_region.getText().toString());
+//                        profile.put("address", edit_address.getText().toString());
+//                    }
 
+                    // 2. Фойдаланувчи ҳужжатини яратиш
+                    transaction.set(userRef, profile);
 
+                    // 3. Сўнгги IDни янгилаш
+                    transaction.update(counterRef, "last_id", newId);
+
+                    return null;
+                }).addOnSuccessListener(unused -> {
+                    Log.d("REGISTER", "Янги userID берилди ва сақланди");
+                }).addOnFailureListener(e -> {
+                    Log.e("REGISTER", "Transaction хатоси: " + e.getMessage());
+                });
+            }
+        }).addOnFailureListener(e -> {
+            Log.e("REGISTER", "Фойдаланувчини текширишда хатолик: " + e.getMessage());
+        });
     }
 
 
@@ -153,8 +178,9 @@ public class LoginActivity extends AppCompatActivity {
                         Toast.makeText(this, "Kirish muvaffaqiyatli", Toast.LENGTH_SHORT).show();
                         register();
 
+
                         // CustomerActivity'га ўтиш
-                        if(isCustomer) {
+                        if (isCustomer) {
                             SharedPreferencesUtil.saveString(this, "CustomerMain", "CustomerMain");
                             SharedPreferencesUtil.saveString(this, "CustomerID", user.getUid());
 

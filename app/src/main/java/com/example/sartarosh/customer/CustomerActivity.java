@@ -88,8 +88,8 @@ public class CustomerActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     Toolbar toolbar;
     String  data, dd, mm, yy, min, hours;
-    private String barbershopId, customerId, customerName, customerPhone;
-    TextView barbes_date_text, date_text, time_input_text;
+    private String barbershopId, customerId, customerName, customerPhone, userID;
+    TextView barbes_date_text, date_text, user_id;
     Spinner spinner_min, spinner_hours;
 
     @Override
@@ -103,6 +103,7 @@ public class CustomerActivity extends AppCompatActivity {
         customerId = SharedPreferencesUtil.getString(this, "CustomerID", "");
         customerName = SharedPreferencesUtil.getString(this, "getName", "");
         customerPhone = SharedPreferencesUtil.getString(this, "getPhone", "");
+        userID = SharedPreferencesUtil.getString(this, "userID", "");
 
         initViews();
 //        initListeners();
@@ -124,7 +125,7 @@ public class CustomerActivity extends AppCompatActivity {
         Log.d("demo56", "version: " +  dd + " - " + mm + " - " + yy + " - " + data );
 
         ReadDb();
-
+        initListeners();
         findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet() );
 
 
@@ -207,7 +208,7 @@ public class CustomerActivity extends AppCompatActivity {
 //        editMinute = findViewById(R.id.edit_minut_id);
 //        addHourBtn = findViewById(R.id.add_hour_id);
         backBtn = findViewById(R.id.back_Button);
-//        logoutBtn = findViewById(R.id.custom_user_logput);
+        user_id = findViewById(R.id.user_id);
         recycler = findViewById(R.id.recycler);
 
 
@@ -216,6 +217,8 @@ public class CustomerActivity extends AppCompatActivity {
 
         barbes_date_text.setText(customerName );
         date_text.setText("Bugun " + LocalDateTime.dateDDMMYY());
+        user_id.setText("ID " + userID );
+
 
 
     }
@@ -255,12 +258,12 @@ public class CustomerActivity extends AppCompatActivity {
     }
 
     private void initListeners() {
-        addHourBtn.setOnClickListener(v -> {
-            WriteDb();
-            Log.d("demo20", "Slot parsing failed: " + hours + " " + min );
-            activityList.clear();
-            ReadDb();
-        });
+//        addHourBtn.setOnClickListener(v -> {
+//            WriteDb();
+//            Log.d("demo20", "Slot parsing failed: " + hours + " " + min );
+//            activityList.clear();
+//            ReadDb();
+//        });
 
         backBtn.setOnClickListener(v -> {
             startActivity(new Intent(this, CustomerBarberActivity.class));
@@ -307,39 +310,45 @@ public class CustomerActivity extends AppCompatActivity {
     }
 
     public void ReadDb() {
-        db.collection("Barbers").document(barbershopId).collection("Customer1").document(customerId).collection("Customer2")
-                .whereGreaterThanOrEqualTo("day-time", dd)
-                .whereLessThanOrEqualTo("day-time",  dd + "\uf8ff")
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
-                        activityList.clear();
 
-                        for (QueryDocumentSnapshot doc : task.getResult()) {
-                            String slot = doc.getString("slot");
-                            if (slot == null || !slot.contains("-")) continue;
+        if (!barbershopId.isEmpty()) {
+            db.collection("Barbers").document(barbershopId).collection("Customer1").document(customerId).collection("Customer2")
+                    .whereGreaterThanOrEqualTo("day-time", dd)
+                    .whereLessThanOrEqualTo("day-time", dd + "\uf8ff")
+                    .get()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful() && task.getResult() != null) {
+                            List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
+                            activityList.clear();
 
-                            activityList.add(new TimeModel(barbershopId,customerId, doc.getId(), slot));
+                            for (QueryDocumentSnapshot doc : task.getResult()) {
+                                String slot = doc.getString("slot");
+                                if (slot == null || !slot.contains("-")) continue;
 
-                            try {
-                                String[] parts = slot.split("-");
-                                LocalTime start = LocalTime.parse(parts[0].trim());
-                                LocalTime end = LocalTime.parse(parts[1].trim());
-                                timeSlots.add(new TimeSlotView.TimeSlot(start, end));
-                            } catch (Exception e) {
-                                Log.w("ParseError", "Slot parsing failed: " + slot);
+                                activityList.add(new TimeModel(barbershopId, customerId, doc.getId(), slot));
+
+                                try {
+                                    String[] parts = slot.split("-");
+                                    LocalTime start = LocalTime.parse(parts[0].trim());
+                                    LocalTime end = LocalTime.parse(parts[1].trim());
+                                    timeSlots.add(new TimeSlotView.TimeSlot(start, end));
+                                } catch (Exception e) {
+                                    Log.w("ParseError", "Slot parsing failed: " + slot);
+                                }
                             }
-                        }
 
-                        timeSlotView.setBusySlots(timeSlots);
-                        recycler.setLayoutManager(new GridLayoutManager(this, 1));
-                        adapter = new CustomerAdapter(this, activityList);
-                        recycler.setAdapter(adapter);
-                    } else {
-                        Log.e("Firestore", "Failed to read slots", task.getException());
-                    }
-                });
+                            timeSlotView.setBusySlots(timeSlots);
+                            recycler.setLayoutManager(new GridLayoutManager(this, 1));
+                            adapter = new CustomerAdapter(this, activityList);
+                            recycler.setAdapter(adapter);
+                        } else {
+                            Log.e("Firestore", "Failed to read slots", task.getException());
+                        }
+                    });
+        }
+        else {
+            Log.e("ReadDb", "Barber ID is empty");
+        }
     }
 
     // Ichki klass — vaqtни кўрсатувчи view

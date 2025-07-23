@@ -2,14 +2,15 @@ package com.example.sartarosh.customer;
 
 public class CustomerModel {
 
-String name, phone, barbesId;
+String name, phone, barbesId, userID;
     public CustomerModel () {
     }
 
-    public CustomerModel(String name, String phone, String barbesId) {
+    public CustomerModel(String name, String phone, String barbesId, String userID) {
         this.name = name;
         this.phone = phone;
         this.barbesId = barbesId;
+        this.userID = userID;
     }
 
     public String getName() {
@@ -22,5 +23,9 @@ String name, phone, barbesId;
 
     public String getBarbesId() {
         return barbesId;
+    }
+
+    public String getUserID() {
+        return userID;
     }
 }
