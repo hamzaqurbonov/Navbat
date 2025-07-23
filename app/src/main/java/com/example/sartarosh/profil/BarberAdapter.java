@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.sartarosh.R;
 import com.example.sartarosh.TimeModel;
 
+import com.example.sartarosh.customer.CustomerAdapter;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -46,8 +47,11 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
 
-        String documentId = activityllist.get(position).getBarbersId();
+        String BarbersId = activityllist.get(position).getBarbersId();
+        String DocId = activityllist.get(position).getDocId();
+//        String documentId = activityllist.get(position).getBarbersId();
         ((BarberAdapter.HomeViewAdapterHolder) holder).TextViewName.setText(activityllist.get(position).getFirst());
+
 
 
         ((BarberAdapter.HomeViewAdapterHolder) holder).deleteSelect.setOnClickListener(new View.OnClickListener() {
@@ -62,7 +66,11 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
                     public void onClick(DialogInterface dialogInterface, int i) {
                         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-                        db.collection("users").document(documentId)
+
+
+
+                        db.collection("Barbers").document(BarbersId).collection("Customer1")
+                                .document(BarbersId).collection("Customer2").document(DocId)
                                 .delete()
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
@@ -87,6 +95,46 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
                 builder.create().show();
             }
         });
+
+
+
+//        ((BarberAdapter.HomeViewAdapterHolder) holder).deleteSelect.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//
+//                AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+//                builder.setTitle("Matinni o'chirish");
+//                builder.setMessage("Matinni o'chirishni istaysizmi?");
+//                builder.setPositiveButton("Ha", new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialogInterface, int i) {
+//                        FirebaseFirestore db = FirebaseFirestore.getInstance();
+//
+//                        db.collection("users").document(documentId)
+//                                .delete()
+//                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+//                                    @Override
+//                                    public void onSuccess(Void aVoid) {
+//                                        Toast.makeText(v.getContext(), "Matin o'chirildi!", Toast.LENGTH_SHORT).show();
+//                                    }
+//                                })
+//                                .addOnFailureListener(new OnFailureListener() {
+//                                    @Override
+//                                    public void onFailure(@NonNull Exception e) {
+//                                        Toast.makeText(v.getContext(), "Xatolik: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+//                                    }
+//                                });
+//
+//                        activityllist.clear();
+//                        barberActivity.readDb();
+//
+//
+//                    }
+//                });
+//                builder.setNegativeButton("Yo'q", null);
+//                builder.create().show();
+//            }
+//        });
 
     }
 

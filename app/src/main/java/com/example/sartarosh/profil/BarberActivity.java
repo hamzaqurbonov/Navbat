@@ -9,14 +9,17 @@ import android.graphics.Paint;
 import android.os.Bundle;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -29,20 +32,24 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.sartarosh.LocalDateTime;
 import com.example.sartarosh.MainActivity;
 import com.example.sartarosh.R;
 import com.example.sartarosh.SharedPreferencesUtil;
+import com.example.sartarosh.SpinnerAdapter;
 import com.example.sartarosh.TimeModel;
 import com.example.sartarosh.customer.CustomerActivity;
 import com.example.sartarosh.customer.CustomerBarberActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +66,8 @@ public class BarberActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private ImageView userButton;
     Toolbar toolbar;
+    String  data, dd, mm, yy, min, hours;
+    Spinner spinner_min, spinner_hours;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,7 +77,7 @@ public class BarberActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
         initViews();
-        setupListeners();
+//        setupListeners();
         addTimeSlotView();
         readDb();
 
@@ -76,17 +85,90 @@ public class BarberActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        editHour = findViewById(R.id.edit_hour_id_barber);
-        editMinute = findViewById(R.id.edit_minut_id_barber);
-        addHourButton = findViewById(R.id.add_hour_id_barber);
+//        editHour = findViewById(R.id.edit_hour_id_barber);
+//        editMinute = findViewById(R.id.edit_minut_id_barber);
+//        addHourButton = findViewById(R.id.add_hour_id_barber);
 //        userButton = findViewById(R.id.user_Button);
-        recyclerView = findViewById(R.id.recycler_barber);
+        recyclerView = findViewById(R.id.recycler);
 
 
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet());
 
+        dd = LocalDateTime.dateDD();
+        mm = LocalDateTime.dateMM();
+        yy = LocalDateTime.dateYYYY();
+        data = LocalDateTime.dateDDMMYY();
+
+    }
+
+
+    private void showMaterialTimeBottomSheet() {
+        // BottomSheetDialog яратиш
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View bottomSheetView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_time_picker, null, false);
+        bottomSheetDialog.setContentView(bottomSheetView);
+
+        // Spinner'ни view орқали оламиз (ЭЪТИБОР БЕРИН!)
+        spinner_min = bottomSheetView.findViewById(R.id.spinner_min);
+        spinner_hours = bottomSheetView.findViewById(R.id.spinner_hours);
+
+
+        if (spinner_hours != null) {
+
+            String[] spinner_hours_list = {"08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"};
+            SpinnerAdapter adapter_hours = new SpinnerAdapter(this, Arrays.asList(spinner_hours_list), R.layout.spinner);
+            spinner_hours.setAdapter(adapter_hours);
+            spinner_hours.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                    String selectedOption = parentView.getItemAtPosition(position).toString();
+                    hours = selectedOption;
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parentView) {
+                }
+            });
+
+        }
+        if (spinner_min != null) {
+
+            // SpinnerAdapter тайинлаш
+            String[] spinner_young_list = {"00", "10", "20", "30", "40", "50"};
+            SpinnerAdapter adapter_young = new SpinnerAdapter(this, Arrays.asList(spinner_young_list), R.layout.spinner);
+            spinner_min.setAdapter(adapter_young);
+            spinner_min.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                    String selectedOption = parentView.getItemAtPosition(position).toString();
+                    min = selectedOption;
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parentView) {
+                }
+            });
+        } else {
+//            Log.w("ParseError", "Slot parsing failed: " + slot);
+        }
+
+        // OK тугма
+        Button okButton = bottomSheetView.findViewById(R.id.btn_ok);
+        if (okButton != null) {
+
+
+            okButton.setOnClickListener(v -> {
+                writeDb();
+                activityList.clear();
+                readDb();
+                bottomSheetDialog.dismiss();
+            });
+        }
+
+        bottomSheetDialog.show();
     }
 
 
@@ -125,16 +207,14 @@ public class BarberActivity extends AppCompatActivity {
     }
 
 
-
-
-    private void setupListeners() {
-        addHourButton.setOnClickListener(v -> {
-            writeDb();
-            activityList.clear();
-            readDb();
-        });
-
-    }
+//    private void setupListeners() {
+//        addHourButton.setOnClickListener(v -> {
+//            writeDb();
+//            activityList.clear();
+//            readDb();
+//        });
+//
+//    }
 
     private void addTimeSlotView() {
         FrameLayout container = findViewById(R.id.schedule_container_barber);
@@ -166,8 +246,8 @@ public class BarberActivity extends AppCompatActivity {
     }
 
     private void writeDb() {
-        String hourStr = editHour.getText().toString();
-        String minuteStr = editMinute.getText().toString();
+        String hourStr = hours.toString();
+        String minuteStr = min.toString();
 
         if (hourStr.isEmpty() || minuteStr.isEmpty()) return;
 
@@ -187,21 +267,25 @@ public class BarberActivity extends AppCompatActivity {
 
         Map<String, Object> item = new HashMap<>();
         item.put("slot", slot);
+//        item.put("name", customerName);
+//        item.put("phone", customerPhone);
+        item.put("data", data);
+        item.put("day-time", dd);
 
         String uid = mAuth.getCurrentUser().getUid();
-        db.collection("Barbers").document(uid).collection("Customer")
+        db.collection("Barbers").document(uid).collection("Customer1").document(uid).collection("Customer2")
                 .add(item)
                 .addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId()))
                 .addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
 
-        editHour.setText("");
-        editMinute.setText("");
+//        editHour.setText("");
+//        editMinute.setText("");
     }
 
     public void readDb() {
         String uid = mAuth.getCurrentUser().getUid();
 
-        db.collection("Barbers").document(uid).collection("Customer").get()
+        db.collection("Barbers").document(uid).collection("Customer1").document(uid).collection("Customer2").get()
                 .addOnCompleteListener(task -> {
                     if (!task.isSuccessful()) {
                         Log.e("ReadDb", "Error: ", task.getException());
@@ -212,10 +296,15 @@ public class BarberActivity extends AppCompatActivity {
                     activityList.clear();
 
                     for (QueryDocumentSnapshot doc : task.getResult()) {
+//                        String raw = doc.getString("slot");
+//                        String raw = doc.getString("slot");
                         String raw = doc.getString("slot");
+
+
+
                         if (raw == null || !raw.contains("-")) continue;
 
-                        activityList.add(new TimeModel(doc.getId(),"", "", raw));
+                        activityList.add(new TimeModel(uid, "", doc.getId(), raw));
                         try {
                             String[] parts = raw.split("-");
                             LocalTime start = LocalTime.parse(parts[0].trim());
@@ -238,8 +327,14 @@ public class BarberActivity extends AppCompatActivity {
         private final int startHour = 8, endHour = 20, totalMin = (endHour - startHour) * 60;
         private final Paint fill = new Paint(), label = new Paint();
 
-        public TimeSlotView(Context c) { this(c, null); }
-        public TimeSlotView(Context c, AttributeSet a) { this(c, a, 0); }
+        public TimeSlotView(Context c) {
+            this(c, null);
+        }
+
+        public TimeSlotView(Context c, AttributeSet a) {
+            this(c, a, 0);
+        }
+
         public TimeSlotView(Context c, AttributeSet a, int s) {
             super(c, a, s);
             label.setColor(Color.BLACK);
@@ -251,7 +346,8 @@ public class BarberActivity extends AppCompatActivity {
             invalidate();
         }
 
-        @Override protected void onDraw(Canvas c) {
+        @Override
+        protected void onDraw(Canvas c) {
             super.onDraw(c);
             float slotH = (float) getHeight() / totalMin;
 
@@ -272,7 +368,11 @@ public class BarberActivity extends AppCompatActivity {
 
         public static class TimeSlot {
             LocalTime start, end;
-            public TimeSlot(LocalTime s, LocalTime e) { start = s; end = e; }
+
+            public TimeSlot(LocalTime s, LocalTime e) {
+                start = s;
+                end = e;
+            }
         }
     }
 }
