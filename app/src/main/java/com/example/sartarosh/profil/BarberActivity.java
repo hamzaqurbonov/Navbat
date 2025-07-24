@@ -20,6 +20,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -44,6 +45,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
@@ -53,6 +55,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class BarberActivity extends AppCompatActivity {
 
@@ -66,8 +69,11 @@ public class BarberActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private ImageView userButton;
     Toolbar toolbar;
-    String  data, dd, mm, yy, min, hours;
+    TextView barbes_date_text, date_text, user_id;
+    String barbershopId;
+    String data, dd, mm, yy, min, hours;
     Spinner spinner_min, spinner_hours;
+    TimeModel timeModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,20 +81,23 @@ public class BarberActivity extends AppCompatActivity {
 //        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_barber);
 
+        barbershopId = SharedPreferencesUtil.getString(this, "BarbesID", "");
+
         mAuth = FirebaseAuth.getInstance();
         initViews();
 //        setupListeners();
         addTimeSlotView();
         readDb();
+        readFaseDb();
 
 //        userButton.setOnClickListener(v -> logout());
     }
 
     private void initViews() {
 //        editHour = findViewById(R.id.edit_hour_id_barber);
-//        editMinute = findViewById(R.id.edit_minut_id_barber);
-//        addHourButton = findViewById(R.id.add_hour_id_barber);
-//        userButton = findViewById(R.id.user_Button);
+        barbes_date_text = findViewById(R.id.barbes_date_text);
+        date_text = findViewById(R.id.date_text);
+        user_id = findViewById(R.id.user_id);
         recyclerView = findViewById(R.id.recycler);
 
 
@@ -102,6 +111,30 @@ public class BarberActivity extends AppCompatActivity {
         yy = LocalDateTime.dateYYYY();
         data = LocalDateTime.dateDDMMYY();
 
+
+        date_text.setText("Bugun " + LocalDateTime.dateDDMMYY());
+
+
+    }
+
+
+    public void readFaseDb() {
+
+        db.collection("Barbers").document(barbershopId)
+
+                .get().addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        BarberProfile profile = documentSnapshot.toObject(BarberProfile.class);
+
+                        if (profile != null) {
+
+                            user_id.setText("ID " + profile.getUserID());
+                            barbes_date_text.setText(profile.getName());
+                        }
+                    }
+                }).addOnFailureListener(e -> {
+                    Log.e("readDb", "Xatolik: " + e.getMessage());
+                });
     }
 
 
@@ -188,10 +221,7 @@ public class BarberActivity extends AppCompatActivity {
             return true;
         } else if (id == R.id.action_logout) {
             FirebaseAuth.getInstance().signOut();
-            GoogleSignIn.getClient(this, new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                    .requestIdToken(getString(R.string.default_web_client_id))
-                    .requestEmail()
-                    .build()).signOut();
+            GoogleSignIn.getClient(this, new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestIdToken(getString(R.string.default_web_client_id)).requestEmail().build()).signOut();
 
             SharedPreferences.Editor editor = getSharedPreferences("app_prefs", MODE_PRIVATE).edit();
             editor.clear().apply();
@@ -219,25 +249,17 @@ public class BarberActivity extends AppCompatActivity {
     private void addTimeSlotView() {
         FrameLayout container = findViewById(R.id.schedule_container_barber);
         timeSlotView = new TimeSlotView(this);
-        container.addView(timeSlotView, new FrameLayout.LayoutParams(
-                (int) (getResources().getDisplayMetrics().density * 80),
-                ViewGroup.LayoutParams.MATCH_PARENT));
+        container.addView(timeSlotView, new FrameLayout.LayoutParams((int) (getResources().getDisplayMetrics().density * 80), ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
     private void logout() {
         FirebaseAuth.getInstance().signOut();
 
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build();
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestIdToken(getString(R.string.default_web_client_id)).requestEmail().build();
 
         GoogleSignIn.getClient(this, gso).signOut();
 
-        getSharedPreferences("app_prefs", MODE_PRIVATE)
-                .edit()
-                .clear()
-                .apply();
+        getSharedPreferences("app_prefs", MODE_PRIVATE).edit().clear().apply();
 
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -273,10 +295,7 @@ public class BarberActivity extends AppCompatActivity {
         item.put("day-time", dd);
 
         String uid = mAuth.getCurrentUser().getUid();
-        db.collection("Barbers").document(uid).collection("Customer1").document(uid).collection("Customer2")
-                .add(item)
-                .addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId()))
-                .addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
+        db.collection("Barbers").document(uid).collection("Customer1").document(uid).collection("Customer2").add(item).addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId())).addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
 
 //        editHour.setText("");
 //        editMinute.setText("");
@@ -285,41 +304,42 @@ public class BarberActivity extends AppCompatActivity {
     public void readDb() {
         String uid = mAuth.getCurrentUser().getUid();
 
-        db.collection("Barbers").document(uid).collection("Customer1").document(uid).collection("Customer2").get()
-                .addOnCompleteListener(task -> {
-                    if (!task.isSuccessful()) {
-                        Log.e("ReadDb", "Error: ", task.getException());
-                        return;
-                    }
+        db.collection("Barbers").document(uid).collection("Customer1").document(uid).collection("Customer2").whereGreaterThanOrEqualTo("day-time", dd).whereLessThanOrEqualTo("day-time", dd + "\uf8ff").get().addOnCompleteListener(task -> {
+            if (!task.isSuccessful()) {
+                Log.e("ReadDb", "Error: ", task.getException());
+                return;
+            }
 
-                    List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
-                    activityList.clear();
+            List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
+            activityList.clear();
 
-                    for (QueryDocumentSnapshot doc : task.getResult()) {
+            for (QueryDocumentSnapshot doc : task.getResult()) {
 //                        String raw = doc.getString("slot");
 //                        String raw = doc.getString("slot");
-                        String raw = doc.getString("slot");
+                String raw = doc.getString("slot");
+                String userID = doc.getString("userID");
 
 
+                if (raw == null || !raw.contains("-")) continue;
 
-                        if (raw == null || !raw.contains("-")) continue;
+                activityList.add(new TimeModel(uid, "", doc.getId(), raw));
 
-                        activityList.add(new TimeModel(uid, "", doc.getId(), raw));
-                        try {
-                            String[] parts = raw.split("-");
-                            LocalTime start = LocalTime.parse(parts[0].trim());
-                            LocalTime end = LocalTime.parse(parts[1].trim());
-                            timeSlots.add(new TimeSlotView.TimeSlot(start, end));
-                        } catch (Exception e) {
-                            Log.w("Parse", "Invalid slot: " + raw);
-                        }
-                    }
 
-                    timeSlotView.setBusySlots(timeSlots);
-                    recyclerView.setLayoutManager(new GridLayoutManager(this, 1));
-                    adapter = new BarberAdapter(this, activityList);
-                    recyclerView.setAdapter(adapter);
-                });
+                try {
+                    String[] parts = raw.split("-");
+                    LocalTime start = LocalTime.parse(parts[0].trim());
+                    LocalTime end = LocalTime.parse(parts[1].trim());
+                    timeSlots.add(new TimeSlotView.TimeSlot(start, end));
+                } catch (Exception e) {
+                    Log.w("Parse", "Invalid slot: " + raw);
+                }
+            }
+
+            timeSlotView.setBusySlots(timeSlots);
+            recyclerView.setLayoutManager(new GridLayoutManager(this, 1));
+            adapter = new BarberAdapter(this, activityList);
+            recyclerView.setAdapter(adapter);
+        });
     }
 
     public static class TimeSlotView extends View {

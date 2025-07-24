@@ -5,25 +5,26 @@ import com.google.firebase.Timestamp;
 import java.util.List;
 
 public class BarberProfile {
-    private String userId;
-    private String name;
-    private String location;
-    private String description;
-    private String workHours;
-    private List<String> services;
-    private Timestamp createdAt;
+    private String name, phone, userID;
+    private String province;
+    private String region;
+    private String destination;
 
-    public BarberProfile() {}
+    private String backupPhone ;
 
-    public BarberProfile(String userId, String name, String location, String description,
-                         String workHours, List<String> services, Timestamp createdAt) {
-        this.userId = userId;
-        this.name = name;
-        this.location = location;
-        this.description = description;
-        this.workHours = workHours;
-        this.services = services;
-        this.createdAt = createdAt;
+    public BarberProfile() {
+        // Firestore учун бўш конструктор
     }
 
+    public String getName() { return name; }
+    public String getPhone() { return phone; }
+    public String getUserID() { return userID; }
+    public String getProvince() { return province; }
+    public String getRegion() { return region; }
+    public String getDestination() { return destination; }
+
+    public String getBackupPhone() { return backupPhone; }
+
+
 }
+

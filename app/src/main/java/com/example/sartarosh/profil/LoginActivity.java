@@ -121,7 +121,7 @@ public class LoginActivity extends AppCompatActivity {
                     DocumentSnapshot snapshot = transaction.get(counterRef);
                     long lastId = snapshot.contains("last_id") ? snapshot.getLong("last_id") : 0;
                     long newId = lastId + 1;
-                    String formattedId = String.format("%05d", newId); // 00001, 00002, ...
+                    String formattedId = String.format("%04d", newId); // 00001, 00002, ...
 
                     Map<String, Object> profile = new HashMap<>();
                     profile.put("userID", formattedId);
