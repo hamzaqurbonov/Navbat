@@ -5,8 +5,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -18,11 +21,14 @@ import androidx.recyclerview.widget.GridLayoutManager;
 
 import com.example.sartarosh.R;
 import com.example.sartarosh.SharedPreferencesUtil;
+import com.example.sartarosh.SpinnerAdapter;
 import com.example.sartarosh.TimeModel;
 import com.example.sartarosh.customer.CustomerActivity;
 import com.example.sartarosh.customer.CustomerBarberActivity;
 import com.example.sartarosh.customer.CustomerModel;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
@@ -41,102 +47,137 @@ import java.util.Map;
 import java.util.Objects;
 
 public class EditProfileActivity extends AppCompatActivity {
+
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private final List<BarberProfile> activityList = new ArrayList<>();
-    private EditText edit_name, edit_oblast, edit_region, edit_address, edit_phone, edit_phone2;
-    //    boolean isCustomer;
-    String customerId, barbesId, customer;
+    private EditText edit_name, edit_address, edit_phone, edit_phone2;
+    private Spinner spinner_oblast, spinner_region;
+
+    private String customerId, barbesId, docType;
+    private boolean isCustomer;
+
+    private String selectedOblast, selectedRegion;
+    private final List<String> oblastList = new ArrayList<>();
+    private final List<String> regionList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_edit_profile);
-//        isCustomer = getIntent().getBooleanExtra("Customer", false);
+
         customerId = SharedPreferencesUtil.getString(this, "CustomerID", "");
         barbesId = SharedPreferencesUtil.getString(this, "BarbesID", "");
-        customer = SharedPreferencesUtil.getString(this, "Customer", "");
+        docType = SharedPreferencesUtil.getString(this, "Customer", ""); // "Customer" ёки ""
 
-        readDb();
+        isCustomer = "Customer".equals(docType);
+
         initViews();
-        Log.d("SharedPrefs", customerId + " : " + barbesId + " : " + customer);
+        readDb();
+        setupRegionCollection();
+
+        if (isCustomer) {
+            spinner_oblast.setVisibility(View.GONE);
+            spinner_region.setVisibility(View.GONE);
+            edit_address.setVisibility(View.GONE);
+        }
     }
-
-
-    public void readDb() {
-
-
-//        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        DocumentReference userRef = Objects.equals(customer, "Customer")
-                ? db.collection("Customer").document(customerId)
-                : db.collection("Barbers").document(barbesId);
-
-            userRef.get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        BarberProfile profile = documentSnapshot.toObject(BarberProfile.class);
-
-                        if (profile != null) {
-                            edit_name.setText(profile.getName());
-                            edit_oblast.setText(profile.getProvince());
-                            edit_region.setText(profile.getRegion());
-                            edit_address.setText(profile.getDestination());
-                            edit_phone.setText(profile.getPhone());
-                            edit_phone2.setText(profile.getBackupPhone());
-                        }
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("readDb", "Xatolik: " + e.getMessage());
-                });
-    }
-
-
 
     private void initViews() {
         edit_name = findViewById(R.id.edit_name);
-        edit_oblast = findViewById(R.id.edit_oblast);
-        edit_region = findViewById(R.id.edit_region);
         edit_address = findViewById(R.id.edit_address);
         edit_phone = findViewById(R.id.edit_phone);
         edit_phone2 = findViewById(R.id.edit_phone2);
-
-        findViewById(R.id.save_btn).setOnClickListener(v -> editProfil());
+        spinner_oblast = findViewById(R.id.spinner_oblast);
+        spinner_region = findViewById(R.id.spinner_region);
+        findViewById(R.id.save_btn).setOnClickListener(v -> saveProfile());
     }
 
-    private void editProfil() {
-        String name = edit_name.getText().toString();
-        String olast = edit_oblast.getText().toString();
-        String region = edit_region.getText().toString();
-        String adress = edit_address.getText().toString();
-        String phone = edit_phone.getText().toString();
-        String phone2 = edit_phone2.getText().toString();
+    private void readDb() {
+        String uid = isCustomer ? customerId : barbesId;
+        String collection = isCustomer ? "Customer" : "Barbers";
 
+        db.collection(collection).document(uid)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (snapshot.exists()) {
+                        BarberProfile profile = snapshot.toObject(BarberProfile.class);
+                        if (profile != null) {
+                            edit_name.setText(profile.getName());
+                            edit_address.setText(profile.getАddress());
+                            edit_phone.setText(profile.getPhone1());
+                            edit_phone2.setText(profile.getPhone2());
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("readDb", "Xatolik: " + e.getMessage()));
+    }
+
+    private void saveProfile() {
         Map<String, Object> profile = new HashMap<>();
-        profile.put("name", name);
-        profile.put("province", olast);
-        profile.put("region", region);
-        profile.put("destination", adress);
-        profile.put("phone", phone);
-        profile.put("backupPhone", phone2);
+        profile.put("name", edit_name.getText().toString());
+        profile.put("phone", edit_phone.getText().toString());
+        profile.put("backupPhone", edit_phone2.getText().toString());
 
-
-        if (Objects.equals(customer, "Customer")) {
-            Log.d("Profile1", "Saqlandi-1");
-            FirebaseFirestore.getInstance().collection("Customer").document(customerId).set(profile).addOnSuccessListener(unused -> {
-                setResult(Activity.RESULT_OK);
-                finish();
-            });
-//            startActivity(new Intent(this, CustomerActivity.class));
-        } else {
-            Log.d("Profile1", "Saqlandi-2");
-            FirebaseFirestore.getInstance().collection("Barbers").document(barbesId).set(profile).addOnSuccessListener(unused -> {
-                setResult(Activity.RESULT_OK);
-                finish();
-            });
-//            startActivity(new Intent(this, BarberActivity.class));
+        if (!isCustomer) {
+            profile.put("province", selectedOblast);
+            profile.put("region", selectedRegion);
+            profile.put("destination", edit_address.getText().toString());
         }
 
+        String uid = isCustomer ? customerId : barbesId;
+        String collection = isCustomer ? "Customer" : "Barbers";
 
+        db.collection(collection).document(uid)
+                .set(profile)
+                .addOnSuccessListener(unused -> {
+                    setResult(Activity.RESULT_OK);
+                    finish();
+                });
+    }
+
+    private void setupRegionCollection() {
+        db.collection("Region").get()
+                .addOnSuccessListener(snapshots -> {
+                    for (DocumentSnapshot doc : snapshots) {
+                        String regionName = doc.getId();
+                        oblastList.add(regionName);
+                    }
+                    setupOblastSpinner();
+                })
+                .addOnFailureListener(e -> Log.w("Firestore", "Маълумотларни олишда хатолик", e));
+    }
+
+    private void setupOblastSpinner() {
+        SpinnerAdapter adapter = new SpinnerAdapter(this, oblastList, R.layout.spinner_region);
+        spinner_oblast.setAdapter(adapter);
+        spinner_oblast.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectedOblast = oblastList.get(position);
+                loadRegionsFor(selectedOblast);
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
+    }
+
+    private void loadRegionsFor(String oblast) {
+        db.collection("Region").document(oblast)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    regionList.clear();
+                    List<String> regions = (List<String>) doc.get("regions");
+                    if (regions != null) regionList.addAll(regions);
+                    setupRegionSpinner();
+                })
+                .addOnFailureListener(e -> Log.w("Firestore", "Хатолик юз берди", e));
+    }
+
+    private void setupRegionSpinner() {
+        SpinnerAdapter adapter = new SpinnerAdapter(this, regionList, R.layout.spinner_region);
+        spinner_region.setAdapter(adapter);
+        spinner_region.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                selectedRegion = regionList.get(position);
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
     }
 }

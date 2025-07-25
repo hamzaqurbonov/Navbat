@@ -5,11 +5,15 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -18,6 +22,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.example.sartarosh.MainActivity;
 import com.example.sartarosh.R;
 import com.example.sartarosh.SharedPreferencesUtil;
+import com.example.sartarosh.SpinnerAdapter;
 import com.example.sartarosh.customer.CustomerActivity;
 import com.example.sartarosh.customer.CustomerBarberActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -25,30 +30,42 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 
 public class LoginActivity extends AppCompatActivity {
     private EditText edit_name, edit_oblast, edit_region, edit_address, edit_phone, edit_phone2;
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private static final int RC_SIGN_IN = 1001;
     private FirebaseAuth mAuth;
     private GoogleSignInClient mGoogleSignInClient;
     boolean isCustomer;
     Map<String, Object> profile = new HashMap<>();
+    Spinner spinner_oblast, spinner_region;
 
-
+    String DocName, NameSubDoc;
+    List<String> oblastList = new ArrayList<>();
+    List<String> regionList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,35 +78,144 @@ public class LoginActivity extends AppCompatActivity {
             return insets;
         });
 
+
+
         isCustomer = getIntent().getBooleanExtra("Customer", false);
 
-
+        spinner_oblast = findViewById(R.id.spinner_oblast);
+        spinner_region = findViewById(R.id.spinner_region);
         // Ro'yxatdan o'tish
         edit_name = findViewById(R.id.edit_name);
-        edit_oblast = findViewById(R.id.edit_oblast);
-        edit_region = findViewById(R.id.edit_region);
         edit_address = findViewById(R.id.edit_address);
         edit_phone = findViewById(R.id.edit_phone);
         edit_phone2 = findViewById(R.id.edit_phone2);
         findViewById(R.id.google_signin_btn).setOnClickListener(v -> signIn());
 
         if (isCustomer) {
-            edit_oblast.setVisibility(View.GONE);
-            edit_region.setVisibility(View.GONE);
+            spinner_oblast.setVisibility(View.GONE);
+            spinner_region.setVisibility(View.GONE);
             edit_address.setVisibility(View.GONE);
+        } else {
+            Collection();
         }
-
         mAuth = FirebaseAuth.getInstance();
-
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id)) // google-services.json'dan
-                .requestEmail()
-                .build();
-
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestIdToken(getString(R.string.default_web_client_id)) // google-services.json'dan
+                .requestEmail().build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
+    }
+
+
+    //------------------------------------------------------------
+    private void Collection() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+// Вилоят -> Туманлар мапи
+        Map<String, List<String>> regionMap = new HashMap<>();
+
+        db.collection("Region")
+                .get()
+                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                    @Override
+                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                        for (DocumentSnapshot document : queryDocumentSnapshots) {
+                            String regionName = document.getId(); // Масалан: "Тошкент"
+                            oblastList.add(regionName);
+
+                            List<String> tumans = (List<String>) document.get("regions");
+
+                            if (tumans != null) {
+                                regionMap.put(regionName, tumans);
+                            } else {
+                                regionMap.put(regionName, new ArrayList<>()); // Агар туманлар бўлмаса
+                            }
+
+                            // Мана тайёр regionMap: Вилоят -> Туманлар
+                            Log.d("Firestore1", "Маълумотлар: " + regionMap.toString() + " " + regionName);
+                        }
+
+                        setupDocSpinner();
+                        // Мисол: Spinner'ни тўлдириш мумкин
+//                        spinner_oblast.setAdapter(new ArrayAdapter<>(LoginActivity.this, android.R.layout.simple_spinner_item, new ArrayList<>(regionMap.keySet())));
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w("Firestore", "Маълумотларни олишда хатолик", e);
+                    }
+                });
 
     }
+
+    private void setupDocSpinner() {
+        SpinnerAdapter adapterDoc = new SpinnerAdapter(LoginActivity.this, oblastList, R.layout.spinner_region);
+        spinner_oblast.setAdapter(adapterDoc);
+        spinner_oblast.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                DocName = parentView.getItemAtPosition(position).toString();
+                loadSubDocuments(DocName);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parentView) {
+                // Do nothing
+            }
+        });
+    }
+
+    private void loadSubDocuments(String docName) {
+
+        db.collection("Region")
+                .document(docName)
+                .get()
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                        if (documentSnapshot.exists()) {
+                            regionList.clear();
+                            List<String> tumans = (List<String>) documentSnapshot.get("regions");
+                            if (tumans != null) {
+                                regionList.addAll(tumans);
+                                // Шу ерда tumanList тайёр
+//                                Log.d("Firestore", "Туманлар: " + tumanList);
+                            } else {
+                                Log.d("Firestore", "Туманлар топилмади.");
+                            }
+                        } else {
+                            Log.d("Firestore", "Ҳужжат мавжуд эмас.");
+                        }
+                        setupSubDocSpinner();
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w("Firestore", "Хатолик юз берди", e);
+                    }
+                });
+    }
+
+    private void setupSubDocSpinner() {
+
+        SpinnerAdapter adapter = new SpinnerAdapter(LoginActivity.this, regionList, R.layout.spinner_region);
+        spinner_region.setAdapter(adapter);
+        spinner_region.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                NameSubDoc = parentView.getItemAtPosition(position).toString();
+//                Toast.makeText(MainActivity.this, "Tanlangan: " + NameSubDoc, Toast.LENGTH_SHORT).show();
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parentView) {
+                // Do nothing
+            }
+        });
+    }
+
+
+    //-------------------------------------------------------
+
 
     private void signIn() {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
@@ -100,21 +226,24 @@ public class LoginActivity extends AppCompatActivity {
 
     private void register() {
         String uid = mAuth.getCurrentUser().getUid();
+
         String name = edit_name.getText().toString();
-        String phone = edit_phone.getText().toString();
+        String province = DocName;
+        String region = NameSubDoc;
+        String аddress = edit_address.getText().toString();
+        String phone1 = edit_phone.getText().toString();
+        String phone2 = edit_phone2.getText().toString();
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        DocumentReference userRef = isCustomer
-                ? db.collection("Customer").document(uid)
-                : db.collection("Barbers").document(uid);
+        DocumentReference userRef = isCustomer ? db.collection("Customer").document(uid) : db.collection("Barbers").document(uid);
 
         // 1. Аввал мавжуд user ҳужжатини текширамиз
         userRef.get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists() && documentSnapshot.contains("userID")) {
-                // 🔁 Аллақачон ID берилган — қайта яратмаймиз
+                //  Аллақачон ID берилган — қайта яратмаймиз
                 Log.d("REGISTER", "Мавжуд userID: " + documentSnapshot.getString("userID"));
             } else {
-                // ✳️ Янги user учун ID яратиш
+                // Янги user учун ID яратиш
                 DocumentReference counterRef = db.collection("UserID").document("users_counter");
 
                 db.runTransaction((Transaction.Function<Void>) transaction -> {
@@ -124,16 +253,15 @@ public class LoginActivity extends AppCompatActivity {
                     String formattedId = String.format("%04d", newId); // 00001, 00002, ...
 
                     Map<String, Object> profile = new HashMap<>();
-                    profile.put("userID", formattedId);
                     profile.put("name", name);
-                    profile.put("phone", phone);
-
-                    // Qo'shimcha ma'lumotlar (agar kerak bo'lsa)
-//                    if (!isCustomer) {
-//                        profile.put("oblast", edit_oblast.getText().toString());
-//                        profile.put("region", edit_region.getText().toString());
-//                        profile.put("address", edit_address.getText().toString());
-//                    }
+                    if (!isCustomer) {
+                        profile.put("province", province);
+                        profile.put("region", region);
+                        profile.put("аddress", аddress);
+                    }
+                    profile.put("phone1", phone1);
+                    profile.put("phone2", phone2);
+                    profile.put("userID", formattedId);
 
                     // 2. Фойдаланувчи ҳужжатини яратиш
                     transaction.set(userRef, profile);
@@ -171,31 +299,32 @@ public class LoginActivity extends AppCompatActivity {
 
     private void firebaseAuthWithGoogle(String idToken) {
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
-        mAuth.signInWithCredential(credential)
-                .addOnCompleteListener(this, task -> {
-                    if (task.isSuccessful()) {
-                        FirebaseUser user = mAuth.getCurrentUser();
-                        Toast.makeText(this, "Kirish muvaffaqiyatli", Toast.LENGTH_SHORT).show();
-                        register();
+        mAuth.signInWithCredential(credential).addOnCompleteListener(this, task -> {
+            if (task.isSuccessful()) {
+                FirebaseUser user = mAuth.getCurrentUser();
+                Toast.makeText(this, "Kirish muvaffaqiyatli", Toast.LENGTH_SHORT).show();
+                register();
 
 
-                        // CustomerActivity'га ўтиш
-                        if (isCustomer) {
-                            SharedPreferencesUtil.saveString(this, "CustomerMain", "CustomerMain");
-                            SharedPreferencesUtil.saveString(this, "CustomerID", user.getUid());
+                // CustomerActivity'га ўтиш
+                if (isCustomer) {
+                    SharedPreferencesUtil.saveString(this, "CustomerMain", "CustomerMain");
+                    SharedPreferencesUtil.saveString(this, "CustomerID", user.getUid());
 
-                            startActivity(new Intent(LoginActivity.this, CustomerBarberActivity.class));
+                    startActivity(new Intent(LoginActivity.this, CustomerBarberActivity.class));
 
-                        } else {
-                            SharedPreferencesUtil.saveString(this, "BarbesID", user.getUid());
-                            startActivity(new Intent(LoginActivity.this, BarberActivity.class));
-                        }
+                } else {
+                    SharedPreferencesUtil.saveString(this, "BarbesID", user.getUid());
+                    startActivity(new Intent(LoginActivity.this, BarberActivity.class));
+                }
 
 
-                        finish();
-                    } else {
-                        Toast.makeText(this, "Authentication failed", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                finish();
+            } else {
+                Toast.makeText(this, "Authentication failed", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
+
+
 }

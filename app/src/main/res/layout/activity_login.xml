@@ -24,18 +24,34 @@
             android:layout_height="wrap_content"
             android:hint="F.I.O (to'liq kiriting)"
             />
-        <EditText
-            android:id="@+id/edit_oblast"
-            android:layout_width="wrap_content"
+<!--        <EditText-->
+<!--            android:id="@+id/edit_oblast"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:hint="Viloyat"-->
+<!--            />-->
+<!--        <EditText-->
+<!--            android:id="@+id/edit_region"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:hint="Tuman"-->
+
+        <Spinner
+            android:id="@+id/spinner_oblast"
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
-            android:hint="Viloyat"
-            />
-        <EditText
-            android:id="@+id/edit_region"
-            android:layout_width="wrap_content"
+            android:gravity="center"
+            android:elevation="16dp"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/spinner_no_arrow"/>
+        <Spinner
+            android:id="@+id/spinner_region"
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
-            android:hint="Tuman"
-            />
+            android:gravity="center"
+            android:elevation="16dp"
+            android:background="@drawable/spinner_no_arrow"/>
+
         <EditText
             android:id="@+id/edit_address"
             android:layout_width="wrap_content"
