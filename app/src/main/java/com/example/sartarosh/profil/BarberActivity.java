@@ -295,7 +295,7 @@ public class BarberActivity extends AppCompatActivity {
         item.put("day-time", dd);
 
         String uid = mAuth.getCurrentUser().getUid();
-        db.collection("Barbers").document(uid).collection("Customer1").document(uid).collection("Customer2").add(item).addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId())).addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
+        db.collection("Barbers").document(uid).collection("Customer1").add(item).addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId())).addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
 
 //        editHour.setText("");
 //        editMinute.setText("");
@@ -304,7 +304,10 @@ public class BarberActivity extends AppCompatActivity {
     public void readDb() {
         String uid = mAuth.getCurrentUser().getUid();
 
-        db.collection("Barbers").document(uid).collection("Customer1").document(uid).collection("Customer2").whereGreaterThanOrEqualTo("day-time", dd).whereLessThanOrEqualTo("day-time", dd + "\uf8ff").get().addOnCompleteListener(task -> {
+        db.collection("Barbers")
+                .document(uid).collection("Customer1")
+                .whereGreaterThanOrEqualTo("day-time", dd).whereLessThanOrEqualTo("day-time", dd + "\uf8ff")
+                .get().addOnCompleteListener(task -> {
             if (!task.isSuccessful()) {
                 Log.e("ReadDb", "Error: ", task.getException());
                 return;
@@ -314,10 +317,8 @@ public class BarberActivity extends AppCompatActivity {
             activityList.clear();
 
             for (QueryDocumentSnapshot doc : task.getResult()) {
-//                        String raw = doc.getString("slot");
-//                        String raw = doc.getString("slot");
+
                 String raw = doc.getString("slot");
-                String userID = doc.getString("userID");
 
 
                 if (raw == null || !raw.contains("-")) continue;

@@ -70,7 +70,7 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
 
 
                         db.collection("Barbers").document(BarbersId).collection("Customer1")
-                                .document(BarbersId).collection("Customer2").document(DocId)
+                                .document(DocId)
                                 .delete()
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override

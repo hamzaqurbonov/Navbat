@@ -1,23 +1,23 @@
 package com.example.sartarosh.profil;
-
-import com.google.firebase.Timestamp;
-
-import java.util.List;
-
 public class BarberProfile {
-    private String name, phone1, phone2, province, region, аddress,  userID;
+    private String name;
+    private String phone1;
+    private String phone2;
+    private String province;
+    private String region;
+    private String address;
+    private String userID;
 
-    public BarberProfile() {
-        // Firestore учун бўш конструктор
-    }
+    // Bo'sh konstruktor (Firestore uchun zarur)
+    public BarberProfile() {}
 
-    public BarberProfile(String name, String phone1, String phone2, String province, String region, String аddress, String userID) {
+    public BarberProfile(String name, String phone1, String phone2, String province, String region, String address, String userID) {
         this.name = name;
         this.phone1 = phone1;
         this.phone2 = phone2;
         this.province = province;
         this.region = region;
-        this.аddress = аddress;
+        this.address = address;
         this.userID = userID;
     }
 
@@ -41,12 +41,40 @@ public class BarberProfile {
         return region;
     }
 
-    public String getАddress() {
-        return аddress;
+    public String getAddress() {
+        return address;
     }
 
     public String getUserID() {
         return userID;
     }
-}
 
+    // ⚙️ Agar kerak bo‘lsa, setterlar ham qo‘shing:
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setPhone1(String phone1) {
+        this.phone1 = phone1;
+    }
+
+    public void setPhone2(String phone2) {
+        this.phone2 = phone2;
+    }
+
+    public void setProvince(String province) {
+        this.province = province;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public void setUserID(String userID) {
+        this.userID = userID;
+    }
+}

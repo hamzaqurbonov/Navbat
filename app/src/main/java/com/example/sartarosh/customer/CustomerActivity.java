@@ -46,6 +46,7 @@ import com.example.sartarosh.R;
 import com.example.sartarosh.SharedPreferencesUtil;
 import com.example.sartarosh.SpinnerAdapter;
 import com.example.sartarosh.TimeModel;
+import com.example.sartarosh.profil.BarberProfile;
 import com.example.sartarosh.profil.EditProfileActivity;
 import com.example.sartarosh.profil.LoginActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -88,9 +89,10 @@ public class CustomerActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     Toolbar toolbar;
     String  data, dd, mm, yy, min, hours;
-    private String barbershopId, customerId, customerName, customerPhone, userID;
+    private String barbershopId, customerId, customerName, customerPhone, barberUserID;
     TextView barbes_date_text, date_text, user_id;
     Spinner spinner_min, spinner_hours;
+    String getName, getPhone1, getPhone2, userID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,7 +105,7 @@ public class CustomerActivity extends AppCompatActivity {
         customerId = SharedPreferencesUtil.getString(this, "CustomerID", "");
         customerName = SharedPreferencesUtil.getString(this, "getName", "");
         customerPhone = SharedPreferencesUtil.getString(this, "getPhone", "");
-        userID = SharedPreferencesUtil.getString(this, "userID", "");
+        barberUserID = SharedPreferencesUtil.getString(this, "userID", "");
 
         initViews();
 //        initListeners();
@@ -127,9 +129,35 @@ public class CustomerActivity extends AppCompatActivity {
         ReadDb();
         initListeners();
         findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet() );
-
+        customerReadDb();
 
     }
+
+
+    private void customerReadDb() {
+//        String uid = isCustomer ? customerId : barbesId;
+//        String collection = isCustomer ? "Customer" : "Barbers";
+
+        db.collection("Customer").document(customerId)
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    if (snapshot.exists()) {
+                        BarberProfile profile = snapshot.toObject(BarberProfile.class);
+                        if (profile != null) {
+                            getName = profile.getName();
+                            getPhone1 = profile.getPhone1();
+                            getPhone2 = profile.getPhone2();
+                            userID = profile.getUserID();
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("readDb", "Xatolik: " + e.getMessage()));
+    }
+
+
+
+
+
 
     private void showMaterialTimeBottomSheet() {
         // BottomSheetDialog яратиш
@@ -217,7 +245,7 @@ public class CustomerActivity extends AppCompatActivity {
 
         barbes_date_text.setText(customerName );
         date_text.setText("Bugun " + LocalDateTime.dateDDMMYY());
-        user_id.setText("ID " + userID );
+        user_id.setText("ID " + barberUserID);
 
 
 
@@ -295,12 +323,15 @@ public class CustomerActivity extends AppCompatActivity {
 
         Map<String, Object> item = new HashMap<>();
         item.put("slot", slot);
-        item.put("name", customerName);
-        item.put("phone", customerPhone);
+        item.put("barberUserID", barberUserID);
+        item.put("customerUserID", userID);
+        item.put("name", getName);
+        item.put("phone1", getPhone1);
+        item.put("phone2", getPhone2);
         item.put("data", data);
         item.put("day-time", dd);
 
-        db.collection("Barbers").document(barbershopId).collection("Customer1").document(customerId).collection("Customer2")
+        db.collection("Barbers").document(barbershopId).collection("Customer1")
                 .add(item)
                 .addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId()))
                 .addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
@@ -312,7 +343,7 @@ public class CustomerActivity extends AppCompatActivity {
     public void ReadDb() {
 
         if (!barbershopId.isEmpty()) {
-            db.collection("Barbers").document(barbershopId).collection("Customer1").document(customerId).collection("Customer2")
+            db.collection("Barbers").document(barbershopId).collection("Customer1")
                     .whereGreaterThanOrEqualTo("day-time", dd)
                     .whereLessThanOrEqualTo("day-time", dd + "\uf8ff")
                     .get()

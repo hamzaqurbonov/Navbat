@@ -230,7 +230,7 @@ public class LoginActivity extends AppCompatActivity {
         String name = edit_name.getText().toString();
         String province = DocName;
         String region = NameSubDoc;
-        String аddress = edit_address.getText().toString();
+        String address = edit_address.getText().toString();
         String phone1 = edit_phone.getText().toString();
         String phone2 = edit_phone2.getText().toString();
 
@@ -257,7 +257,7 @@ public class LoginActivity extends AppCompatActivity {
                     if (!isCustomer) {
                         profile.put("province", province);
                         profile.put("region", region);
-                        profile.put("аddress", аddress);
+                        profile.put("address", address);
                     }
                     profile.put("phone1", phone1);
                     profile.put("phone2", phone2);

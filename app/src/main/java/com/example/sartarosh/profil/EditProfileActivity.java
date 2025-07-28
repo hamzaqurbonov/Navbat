@@ -52,7 +52,7 @@ public class EditProfileActivity extends AppCompatActivity {
     private EditText edit_name, edit_address, edit_phone, edit_phone2;
     private Spinner spinner_oblast, spinner_region;
 
-    private String customerId, barbesId, docType;
+    private String customerId, barbesId, docType, userID;
     private boolean isCustomer;
 
     private String selectedOblast, selectedRegion;
@@ -102,9 +102,10 @@ public class EditProfileActivity extends AppCompatActivity {
                         BarberProfile profile = snapshot.toObject(BarberProfile.class);
                         if (profile != null) {
                             edit_name.setText(profile.getName());
-                            edit_address.setText(profile.getАddress());
+                            edit_address.setText(profile.getAddress());
                             edit_phone.setText(profile.getPhone1());
                             edit_phone2.setText(profile.getPhone2());
+                            userID = (profile.getUserID());
                         }
                     }
                 })
@@ -114,13 +115,14 @@ public class EditProfileActivity extends AppCompatActivity {
     private void saveProfile() {
         Map<String, Object> profile = new HashMap<>();
         profile.put("name", edit_name.getText().toString());
-        profile.put("phone", edit_phone.getText().toString());
-        profile.put("backupPhone", edit_phone2.getText().toString());
+        profile.put("phone1", edit_phone.getText().toString());
+        profile.put("phone2", edit_phone2.getText().toString());
+        profile.put("userID", userID);
 
         if (!isCustomer) {
             profile.put("province", selectedOblast);
             profile.put("region", selectedRegion);
-            profile.put("destination", edit_address.getText().toString());
+            profile.put("address", edit_address.getText().toString());
         }
 
         String uid = isCustomer ? customerId : barbesId;
@@ -181,3 +183,4 @@ public class EditProfileActivity extends AppCompatActivity {
         });
     }
 }
+

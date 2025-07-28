@@ -71,7 +71,7 @@ public class CustomerAdapter extends RecyclerView.Adapter< RecyclerView.ViewHold
 
 
                         db.collection("Barbers").document(BarbersId).collection("Customer1")
-                                .document(CustomerId).collection("Customer2").document(DocId)
+                                .document(DocId)
                                 .delete()
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
