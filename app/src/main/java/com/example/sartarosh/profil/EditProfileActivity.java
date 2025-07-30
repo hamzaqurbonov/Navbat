@@ -132,6 +132,13 @@ public class EditProfileActivity extends AppCompatActivity {
                 .set(profile)
                 .addOnSuccessListener(unused -> {
                     setResult(Activity.RESULT_OK);
+                    Intent intent;
+                    if (isCustomer) {
+                        intent = new Intent(this, CustomerActivity.class);
+                    } else {
+                        intent = new Intent(this, BarberActivity.class);
+                    }
+                    startActivity(intent);
                     finish();
                 });
     }

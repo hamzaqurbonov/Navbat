@@ -59,12 +59,18 @@
             android:hint="ish manzili(mo'ljal)"
             />
 
+
+
+
         <EditText
             android:id="@+id/edit_phone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="Telefon raqamingiz"
-            android:inputType="phone" />
+
+            android:inputType="phone"
+            android:maxLength="19"
+            android:hint="+998 (__) ___-__-__"
+             />
         <EditText
             android:id="@+id/edit_phone2"
             android:layout_width="wrap_content"

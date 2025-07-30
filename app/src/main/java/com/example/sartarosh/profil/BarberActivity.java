@@ -74,6 +74,7 @@ public class BarberActivity extends AppCompatActivity {
     String data, dd, mm, yy, min, hours;
     Spinner spinner_min, spinner_hours;
     TimeModel timeModel;
+    String getName, getPhone1, userID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,14 +85,17 @@ public class BarberActivity extends AppCompatActivity {
         barbershopId = SharedPreferencesUtil.getString(this, "BarbesID", "");
 
         mAuth = FirebaseAuth.getInstance();
+        barbesReadDb();
         initViews();
 //        setupListeners();
         addTimeSlotView();
         readDb();
-        readFaseDb();
+
 
 //        userButton.setOnClickListener(v -> logout());
     }
+
+
 
     private void initViews() {
 //        editHour = findViewById(R.id.edit_hour_id_barber);
@@ -118,7 +122,7 @@ public class BarberActivity extends AppCompatActivity {
     }
 
 
-    public void readFaseDb() {
+    public void barbesReadDb() {
 
         db.collection("Barbers").document(barbershopId)
 
@@ -235,17 +239,6 @@ public class BarberActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
-
-
-//    private void setupListeners() {
-//        addHourButton.setOnClickListener(v -> {
-//            writeDb();
-//            activityList.clear();
-//            readDb();
-//        });
-//
-//    }
-
     private void addTimeSlotView() {
         FrameLayout container = findViewById(R.id.schedule_container_barber);
         timeSlotView = new TimeSlotView(this);

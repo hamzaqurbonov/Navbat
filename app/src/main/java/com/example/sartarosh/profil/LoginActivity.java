@@ -3,6 +3,9 @@ package com.example.sartarosh.profil;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.telephony.PhoneNumberFormattingTextWatcher;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -20,6 +23,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.sartarosh.MainActivity;
+import com.example.sartarosh.PhoneFormatter;
 import com.example.sartarosh.R;
 import com.example.sartarosh.SharedPreferencesUtil;
 import com.example.sartarosh.SpinnerAdapter;
@@ -45,6 +49,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -103,8 +109,10 @@ public class LoginActivity extends AppCompatActivity {
                 .requestEmail().build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-    }
+        PhoneFormatter.attachTo(edit_phone);
+        PhoneFormatter.attachTo(edit_phone2);
 
+    }
 
     //------------------------------------------------------------
     private void Collection() {
