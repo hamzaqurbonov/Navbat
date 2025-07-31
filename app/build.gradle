@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace 'com.example.sartarosh'
+    namespace 'com.bc.sartarosh'
     compileSdk 34
 
     defaultConfig {

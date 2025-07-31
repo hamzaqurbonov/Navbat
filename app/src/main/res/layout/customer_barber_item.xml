@@ -40,6 +40,13 @@
                 android:text="phone"
                 android:textColor="@color/black"
                 android:textStyle="italic" />
+            <TextView
+                android:id="@+id/userId"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Id"
+                android:textColor="@color/black"
+                android:textStyle="italic" />
         </LinearLayout>
 
         <!-- RIGHT SIDE: ImageView -->

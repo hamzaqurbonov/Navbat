@@ -36,6 +36,16 @@
                 android:text="Вақт"
                 android:textColor="@color/purple_500"
                 android:textStyle="bold" />
+            <TextView
+                android:id="@+id/name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:layout_weight="1"
+                android:padding="4dp"
+                android:text="Isim"
+                android:textColor="@color/black"
+                android:textStyle="italic" />
 
             <TextView
                 android:id="@+id/phone"

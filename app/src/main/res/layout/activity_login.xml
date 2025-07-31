@@ -24,17 +24,6 @@
             android:layout_height="wrap_content"
             android:hint="F.I.O (to'liq kiriting)"
             />
-<!--        <EditText-->
-<!--            android:id="@+id/edit_oblast"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:hint="Viloyat"-->
-<!--            />-->
-<!--        <EditText-->
-<!--            android:id="@+id/edit_region"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:hint="Tuman"-->
 
         <Spinner
             android:id="@+id/spinner_oblast"
@@ -58,15 +47,10 @@
             android:layout_height="wrap_content"
             android:hint="ish manzili(mo'ljal)"
             />
-
-
-
-
         <EditText
             android:id="@+id/edit_phone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-
             android:inputType="phone"
             android:maxLength="19"
             android:hint="+998 (__) ___-__-__"
