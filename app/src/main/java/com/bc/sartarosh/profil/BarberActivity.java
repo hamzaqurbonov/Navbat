@@ -277,7 +277,7 @@ public class BarberActivity extends AppCompatActivity {
 
         Map<String, Object> item = new HashMap<>();
         item.put("slot", slot);
-//        item.put("name", customerName);
+        item.put("name", "Sartarosh band etdi");
 //        item.put("phone", customerPhone);
         item.put("data", data);
         item.put("day-time", dd);
@@ -307,13 +307,13 @@ public class BarberActivity extends AppCompatActivity {
             for (QueryDocumentSnapshot doc : task.getResult()) {
 
                 String raw = doc.getString("slot");
-//                String name = doc.getString("name");
-//                String phone1 = doc.getString("phone1");
+                String name = doc.getString("name");
+                String phone1 = doc.getString("phone1");
 
 
                 if (raw == null || !raw.contains("-")) continue;
 
-                activityList.add(new TimeModel(uid, "", doc.getId(), raw, "",""));
+                activityList.add(new TimeModel(uid, "", doc.getId(), raw, name,phone1, ""));
 
 
                 try {

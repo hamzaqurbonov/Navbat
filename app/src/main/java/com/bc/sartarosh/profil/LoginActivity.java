@@ -100,7 +100,7 @@ public class LoginActivity extends AppCompatActivity {
 
     }
 
-    //------------------------------------------------------------
+    //-------------------------Бошланиш-----------------------------------
     private void Collection() {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -208,14 +208,8 @@ public class LoginActivity extends AppCompatActivity {
     }
 
 
-    //-------------------------------------------------------
+    //--------------------------тугаш-----------------------------
 
-
-    private void signIn() {
-        Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-        startActivityForResult(signInIntent, RC_SIGN_IN);
-
-    }
 
 
     private void register() {
@@ -234,8 +228,9 @@ public class LoginActivity extends AppCompatActivity {
         // 1. Аввал мавжуд user ҳужжатини текширамиз
         userRef.get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists() && documentSnapshot.contains("userID")) {
-                //  Аллақачон ID берилган — қайта яратмаймиз
-                Log.d("REGISTER", "Мавжуд userID: " + documentSnapshot.getString("userID"));
+//                //  Аллақачон ID берилган — қайта яратмаймиз
+//                Log.d("REGISTER1", "Мавжуд userID: " + documentSnapshot.getString("userID"));
+                SharedPreferencesUtil.saveString(this, "customerUserID", documentSnapshot.getString("userID"));
             } else {
                 // Янги user учун ID яратиш
                 DocumentReference counterRef = db.collection("UserID").document("users_counter");
@@ -256,6 +251,7 @@ public class LoginActivity extends AppCompatActivity {
                     profile.put("phone1", phone1);
                     profile.put("phone2", phone2);
                     profile.put("userID", formattedId);
+                    SharedPreferencesUtil.saveString(this, "customerUserID", formattedId);
 
                     // 2. Фойдаланувчи ҳужжатини яратиш
                     transaction.set(userRef, profile);
@@ -273,6 +269,14 @@ public class LoginActivity extends AppCompatActivity {
         }).addOnFailureListener(e -> {
             Log.e("REGISTER", "Фойдаланувчини текширишда хатолик: " + e.getMessage());
         });
+    }
+
+
+
+    private void signIn() {
+        Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+        startActivityForResult(signInIntent, RC_SIGN_IN);
+
     }
 
 

@@ -45,8 +45,9 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
 
         String BarbersId = activityllist.get(position).getBarbersId();
         String DocId = activityllist.get(position).getDocId();
+        ((BarberAdapter.HomeViewAdapterHolder) holder).name.setText(activityllist.get(position).getName());
+        ((HomeViewAdapterHolder) holder).phone.setText(activityllist.get(position).getPhone1());
         ((BarberAdapter.HomeViewAdapterHolder) holder).TextViewName.setText(activityllist.get(position).getFirst());
-
 
 
         ((BarberAdapter.HomeViewAdapterHolder) holder).deleteSelect.setOnClickListener(new View.OnClickListener() {
@@ -96,12 +97,13 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
 
     public class HomeViewAdapterHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         View view;
-        TextView TextViewName, TextViewSum;
+        TextView TextViewName, name, phone;
         ImageView deleteSelect;
         public HomeViewAdapterHolder(View v) {
             super(v);
             view = v;
-
+            phone = view.findViewById(R.id.phone);
+            name = view.findViewById(R.id.name);
             TextViewName = view.findViewById(R.id.time);
             deleteSelect = view.findViewById(R.id.delete_select);
         }

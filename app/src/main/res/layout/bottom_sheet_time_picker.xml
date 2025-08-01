@@ -59,6 +59,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
+            android:backgroundTint="@color/black"
+            android:textColor="@color/purple_500"
+            android:textStyle="bold"
+            android:elevation="16dp"
             android:text="Тасдиқлаш" />
 
     </LinearLayout>

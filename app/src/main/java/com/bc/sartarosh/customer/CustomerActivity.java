@@ -39,7 +39,6 @@ import com.bc.sartarosh.R;
 import com.bc.sartarosh.SharedPreferencesUtil;
 import com.bc.sartarosh.SpinnerAdapter;
 import com.bc.sartarosh.TimeModel;
-import com.bc.sartarosh.profil.BarberActivity;
 import com.bc.sartarosh.profil.BarberProfile;
 import com.bc.sartarosh.profil.EditProfileActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -89,7 +88,7 @@ public class CustomerActivity extends AppCompatActivity {
         barberUserID = SharedPreferencesUtil.getString(this, "userID", "");
 
         initViews();
-//        initListeners();
+
 
         mAuth = FirebaseAuth.getInstance();
 
@@ -116,8 +115,6 @@ public class CustomerActivity extends AppCompatActivity {
 
 
     private void customerReadDb() {
-//        String uid = isCustomer ? customerId : barbesId;
-//        String collection = isCustomer ? "Customer" : "Barbers";
 
         db.collection("Customer").document(customerId)
                 .get()
@@ -129,12 +126,12 @@ public class CustomerActivity extends AppCompatActivity {
                             getPhone1 = profile.getPhone1();
                             getPhone2 = profile.getPhone2();
                             userID = profile.getUserID();
+                            WriteDb(getName,getPhone1,getPhone2);
                         }
                     }
                 })
                 .addOnFailureListener(e -> Log.e("readDb", "Xatolik: " + e.getMessage()));
     }
-
 
 
 
@@ -196,9 +193,10 @@ public class CustomerActivity extends AppCompatActivity {
 
 
             okButton.setOnClickListener(v -> {
-                WriteDb();
-                activityList.clear();
-                ReadDb();
+//                WriteDb();
+                customerReadDb();
+//                activityList.clear();
+//                ReadDb();
                 bottomSheetDialog.dismiss();
             });
         }
@@ -210,12 +208,8 @@ public class CustomerActivity extends AppCompatActivity {
 
 
     private void initViews() {
-//        time_input_text = findViewById(R.id.time_input_text);
         barbes_date_text = findViewById(R.id.barbes_date_text);
         date_text = findViewById(R.id.date_text);
-//        editHour = findViewById(R.id.edit_hour_id);
-//        editMinute = findViewById(R.id.edit_minut_id);
-//        addHourBtn = findViewById(R.id.add_hour_id);
         backBtn = findViewById(R.id.back_Button);
         user_id = findViewById(R.id.user_id);
         recycler = findViewById(R.id.recycler);
@@ -267,12 +261,6 @@ public class CustomerActivity extends AppCompatActivity {
     }
 
     private void initListeners() {
-//        addHourBtn.setOnClickListener(v -> {
-//            WriteDb();
-//            Log.d("demo20", "Slot parsing failed: " + hours + " " + min );
-//            activityList.clear();
-//            ReadDb();
-//        });
 
         backBtn.setOnClickListener(v -> {
             startActivity(new Intent(this, CustomerBarberActivity.class));
@@ -280,10 +268,8 @@ public class CustomerActivity extends AppCompatActivity {
         });
 
     }
-//    String hourStr = "spinner_min.toString().trim()";
-//    String minuteStr = "spinner_hours.toString().trim()";
-    private void WriteDb() {
-        customerReadDb();
+    private void WriteDb(String name, String phone1, String phone2) {
+
         String hourStr = hours.toString();
         String minuteStr = min.toString();
 
@@ -307,9 +293,9 @@ public class CustomerActivity extends AppCompatActivity {
         item.put("slot", slot);
         item.put("barberUserID", barberUserID);
         item.put("customerUserID", userID);
-        item.put("name", getName);
-        item.put("phone1", getPhone1);
-        item.put("phone2", getPhone2);
+        item.put("name", name);
+        item.put("phone1", phone1);
+        item.put("phone2", phone2);
         item.put("data", data);
         item.put("day-time", dd);
 
@@ -317,9 +303,8 @@ public class CustomerActivity extends AppCompatActivity {
                 .add(item)
                 .addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId()))
                 .addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
-
-//        editHour.setText("");
-//        editMinute.setText("");
+        activityList.clear();
+        ReadDb();
     }
 
     public void ReadDb() {
@@ -338,9 +323,10 @@ public class CustomerActivity extends AppCompatActivity {
                                 String slot = doc.getString("slot");
                                 String name = doc.getString("name");
                                 String phone1 = doc.getString("phone1");
+                                String customerUserID = doc.getString("customerUserID");
                                 if (slot == null || !slot.contains("-")) continue;
 
-                                activityList.add(new TimeModel(barbershopId, customerId, doc.getId(), slot, name, phone1));
+                                activityList.add(new TimeModel(barbershopId, customerId, doc.getId(), slot, name, phone1, customerUserID));
 
                                 try {
                                     String[] parts = slot.split("-");

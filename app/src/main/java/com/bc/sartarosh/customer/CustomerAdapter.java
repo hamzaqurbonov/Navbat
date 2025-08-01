@@ -14,12 +14,14 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bc.sartarosh.R;
+import com.bc.sartarosh.SharedPreferencesUtil;
 import com.bc.sartarosh.TimeModel;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.List;
+import java.util.Objects;
 
 public class CustomerAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder>{
 
@@ -47,13 +49,21 @@ public class CustomerAdapter extends RecyclerView.Adapter< RecyclerView.ViewHold
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
 
+
         String BarbersId = activityllist.get(position).getBarbersId();
         String CustomerId = activityllist.get(position).getCustomerId();
         String DocId = activityllist.get(position).getDocId();
+        String getCustomerUserID = activityllist.get(position).getCustomerUserID();
 
         ((CustomerAdapter.HomeViewAdapterHolder) holder).TextViewName.setText(activityllist.get(position).getFirst());
         ((CustomerAdapter.HomeViewAdapterHolder) holder).name.setText(activityllist.get(position).getName());
         ((CustomerAdapter.HomeViewAdapterHolder) holder).phone.setText(activityllist.get(position).getPhone1());
+
+
+        if(!Objects.equals(getCustomerUserID, ((CustomerAdapter.HomeViewAdapterHolder) holder).customerUserID)){
+            Log.d("TAG4", "onBindViewHolder: " + getCustomerUserID + " : " +((CustomerAdapter.HomeViewAdapterHolder) holder).customerUserID );
+            ((CustomerAdapter.HomeViewAdapterHolder) holder).deleteSelect.setVisibility(View.GONE);
+        }
 
 
         ((CustomerAdapter.HomeViewAdapterHolder) holder).deleteSelect.setOnClickListener(new View.OnClickListener() {
@@ -112,10 +122,12 @@ public class CustomerAdapter extends RecyclerView.Adapter< RecyclerView.ViewHold
         View view;
         TextView TextViewName, phone, name;
         ImageView deleteSelect;
+        String customerUserID;
+
         public HomeViewAdapterHolder(View v) {
             super(v);
             view = v;
-
+            customerUserID = SharedPreferencesUtil.getString(v.getContext(), "customerUserID", "");
             TextViewName = view.findViewById(R.id.time);
             phone = view.findViewById(R.id.phone);
             name = view.findViewById(R.id.name);
