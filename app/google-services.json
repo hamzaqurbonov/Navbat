@@ -23,51 +23,6 @@
           }
         },
         {
-          "client_id": "461867832807-4tft8j502ho7bdgpi1sq6ao4lp8irdtp.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.bc.sartarosh",
-            "certificate_hash": "190d9f4486c07a6fda124decf2a89b89b3a3a836"
-          }
-        },
-        {
-          "client_id": "461867832807-avb3ekp0krv5iqp95199cjhfhk4k1r0j.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyA3P4YgdjiX9dVQuIuYJ3FdAABoTEeMDSE"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "461867832807-avb3ekp0krv5iqp95199cjhfhk4k1r0j.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:461867832807:android:c60ba1fa424407e5d49942",
-        "android_client_info": {
-          "package_name": "com.example.sartarosh"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "461867832807-dg8gba26d258q7div2njnv5pe82e2pk9.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.sartarosh",
-            "certificate_hash": "190d9f4486c07a6fda124decf2a89b89b3a3a836"
-          }
-        },
-        {
           "client_id": "461867832807-avb3ekp0krv5iqp95199cjhfhk4k1r0j.apps.googleusercontent.com",
           "client_type": 3
         }

@@ -21,6 +21,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -64,12 +65,14 @@ public class BarberActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private ImageView userButton;
     Toolbar toolbar;
-    TextView barbes_date_text, date_text, user_id;
+    TextView barbes_date_text, user_id, barbes_date;
     String barbershopId;
     String data, dd, mm, yy, min, hours;
     Spinner spinner_min, spinner_hours;
     TimeModel timeModel;
     String getName, getPhone1, userID;
+    int clickPlusCount = 0, plusDD;
+    ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,7 +85,6 @@ public class BarberActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         barbesReadDb();
         initViews();
-//        setupListeners();
         addTimeSlotView();
         readDb();
 
@@ -91,11 +93,38 @@ public class BarberActivity extends AppCompatActivity {
     }
 
 
+    private void plusDate() {
+        if (clickPlusCount <= 2) {
+            clickPlusCount++;
+            plusDD = Integer.parseInt(dd) + clickPlusCount;
+            String date = LocalDateTime.datePlusDays(clickPlusCount);
+            barbes_date.setText(date);
+            Log.d("TAG5", "plusDate: " + plusDD);
+            readDb();
+        } else {
+            Toast.makeText(this, "Keyingi sanaga o'tib bo'lmaydi", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void minusDate() {
+        if (clickPlusCount >= 1) {
+            clickPlusCount--;
+            plusDD = Integer.parseInt(dd) + clickPlusCount;
+            String date = LocalDateTime.datePlusDays(clickPlusCount);
+            barbes_date.setText(date);
+            Log.d("TAG5", "minusDate: " + plusDD);
+            readDb();
+        } else {
+            Toast.makeText(this, "Keyingi sanaga o'tib bo'lmaydi", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
 
     private void initViews() {
-//        editHour = findViewById(R.id.edit_hour_id_barber);
+        barbes_date = findViewById(R.id.barbes_date);
         barbes_date_text = findViewById(R.id.barbes_date_text);
-        date_text = findViewById(R.id.date_text);
+        progressBar = findViewById(R.id.progressBar);
         user_id = findViewById(R.id.user_id);
         recyclerView = findViewById(R.id.recycler);
 
@@ -110,17 +139,17 @@ public class BarberActivity extends AppCompatActivity {
         yy = LocalDateTime.dateYYYY();
         data = LocalDateTime.dateDDMMYY();
 
+        barbes_date.setText(data);
+        plusDD = Integer.parseInt(dd);
 
-        date_text.setText("Bugun " + LocalDateTime.dateDDMMYY());
+        findViewById(R.id.minus_date).setOnClickListener(v -> minusDate());
 
-
+        findViewById(R.id.plus_date).setOnClickListener(v -> plusDate());
     }
 
 
     public void barbesReadDb() {
-
         db.collection("Barbers").document(barbershopId)
-
                 .get().addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         BarberProfile profile = documentSnapshot.toObject(BarberProfile.class);
@@ -184,7 +213,6 @@ public class BarberActivity extends AppCompatActivity {
                 }
             });
         } else {
-//            Log.w("ParseError", "Slot parsing failed: " + slot);
         }
 
         // OK тугма
@@ -280,21 +308,24 @@ public class BarberActivity extends AppCompatActivity {
         item.put("name", "Sartarosh band etdi");
 //        item.put("phone", customerPhone);
         item.put("data", data);
-        item.put("day-time", dd);
+        String stringPlusDD = String.format("%02d", plusDD);
+        item.put("day-time", stringPlusDD);
 
         String uid = mAuth.getCurrentUser().getUid();
         db.collection("Barbers").document(uid).collection("Customer1").add(item).addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId())).addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
 
-//        editHour.setText("");
-//        editMinute.setText("");
     }
 
     public void readDb() {
         String uid = mAuth.getCurrentUser().getUid();
 
+        progressBar.setVisibility(View.VISIBLE);
+
+        String stringPlusDD = String.format("%02d", plusDD);
         db.collection("Barbers")
                 .document(uid).collection("Customer1")
-                .whereGreaterThanOrEqualTo("day-time", dd).whereLessThanOrEqualTo("day-time", dd + "\uf8ff")
+                .whereGreaterThanOrEqualTo("day-time", stringPlusDD)
+                .whereLessThanOrEqualTo("day-time", stringPlusDD + "\uf8ff")
                 .get().addOnCompleteListener(task -> {
             if (!task.isSuccessful()) {
                 Log.e("ReadDb", "Error: ", task.getException());
@@ -330,12 +361,9 @@ public class BarberActivity extends AppCompatActivity {
             recyclerView.setLayoutManager(new GridLayoutManager(this, 1));
             adapter = new BarberAdapter(this, activityList);
             recyclerView.setAdapter(adapter);
+            progressBar.setVisibility(View.GONE);
         });
     }
-
-
-
-
 
     public static class TimeSlotView extends View {
         private List<TimeSlot> busy = new ArrayList<>();
@@ -421,61 +449,4 @@ public class BarberActivity extends AppCompatActivity {
             }
         }
     }
-
-
-
-
-//    public static class TimeSlotView extends View {
-//        private List<TimeSlot> busy = new ArrayList<>();
-//        private final int startHour = 8, endHour = 20, totalMin = (endHour - startHour) * 60;
-//        private final Paint fill = new Paint(), label = new Paint();
-//
-//        public TimeSlotView(Context c) {
-//            this(c, null);
-//        }
-//
-//        public TimeSlotView(Context c, AttributeSet a) {
-//            this(c, a, 0);
-//        }
-//
-//        public TimeSlotView(Context c, AttributeSet a, int s) {
-//            super(c, a, s);
-//            label.setColor(Color.BLACK);
-//            label.setTextSize(26f);
-//        }
-//
-//        public void setBusySlots(List<TimeSlot> list) {
-//            busy = list;
-//            invalidate();
-//        }
-//
-//        @Override
-//        protected void onDraw(Canvas c) {
-//            super.onDraw(c);
-//            float slotH = (float) getHeight() / totalMin;
-//
-//            for (int i = 0; i < totalMin; i++) {
-//                LocalTime now = LocalTime.of(startHour, 0).plusMinutes(i);
-//                boolean isBusy = busy.stream().anyMatch(t -> !now.isBefore(t.start) && now.isBefore(t.end));
-//                fill.setColor(isBusy ? Color.CYAN : Color.GREEN);
-//                float top = i * slotH;
-//                c.drawRect(0, top, getWidth(), top + slotH, fill);
-//            }
-//
-//            for (int h = startHour; h <= endHour; h++) {
-//                float y = (h - startHour) * 60 * slotH;
-//                c.drawLine(0, y, getWidth(), y, label);
-//                c.drawText(String.format("%02d:00", h), 10, y + 24, label);
-//            }
-//        }
-//
-//        public static class TimeSlot {
-//            LocalTime start, end;
-//
-//            public TimeSlot(LocalTime s, LocalTime e) {
-//                start = s;
-//                end = e;
-//            }
-//        }
-//    }
 }

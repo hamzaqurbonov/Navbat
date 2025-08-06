@@ -69,7 +69,7 @@ public class CustomerActivity extends AppCompatActivity {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private FirebaseAuth mAuth;
     Toolbar toolbar;
-    String  data, dd, mm, yy, min, hours;
+    String data, dd, mm, yy, min, hours;
     private String barbershopId, customerId, customerName, customerPhone, barberUserID;
     TextView barbes_date_text, date_text, user_id, barbes_date;
     Spinner spinner_min, spinner_hours;
@@ -110,17 +110,17 @@ public class CustomerActivity extends AppCompatActivity {
         plusDD = Integer.parseInt(dd);
         ReadDb();
         initListeners();
-        findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet() );
+        findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet());
 
-        findViewById(R.id.minus_date).setOnClickListener(v -> minusDate() );
+        findViewById(R.id.minus_date).setOnClickListener(v -> minusDate());
 
-        findViewById(R.id.plus_date).setOnClickListener(v -> plusDate() );
+        findViewById(R.id.plus_date).setOnClickListener(v -> plusDate());
 
 
     }
 
     private void plusDate() {
-        if(clickPlusCount <= 2) {
+        if (clickPlusCount <= 2) {
             clickPlusCount++;
             plusDD = Integer.parseInt(dd) + clickPlusCount;
             String date = LocalDateTime.datePlusDays(clickPlusCount);
@@ -131,8 +131,9 @@ public class CustomerActivity extends AppCompatActivity {
             Toast.makeText(this, "Keyingi sanaga o'tib bo'lmaydi", Toast.LENGTH_SHORT).show();
         }
     }
+
     private void minusDate() {
-        if(clickPlusCount >= 1) {
+        if (clickPlusCount >= 1) {
             clickPlusCount--;
             plusDD = Integer.parseInt(dd) + clickPlusCount;
             String date = LocalDateTime.datePlusDays(clickPlusCount);
@@ -160,16 +161,12 @@ public class CustomerActivity extends AppCompatActivity {
                             getPhone1 = profile.getPhone1();
                             getPhone2 = profile.getPhone2();
                             userID = profile.getUserID();
-                            WriteDb(getName,getPhone1,getPhone2);
+                            WriteDb(getName, getPhone1, getPhone2);
                         }
                     }
                 })
                 .addOnFailureListener(e -> Log.e("readDb", "Xatolik: " + e.getMessage()));
     }
-
-
-
-
 
     private void showMaterialTimeBottomSheet() {
         // BottomSheetDialog яратиш
@@ -218,27 +215,19 @@ public class CustomerActivity extends AppCompatActivity {
                 }
             });
         } else {
-//            Log.w("ParseError", "Slot parsing failed: " + slot);
         }
 
         // OK тугма
         Button okButton = bottomSheetView.findViewById(R.id.btn_ok);
         if (okButton != null) {
-
-
             okButton.setOnClickListener(v -> {
-//                WriteDb();
                 customerReadDb();
-//                activityList.clear();
-//                ReadDb();
                 bottomSheetDialog.dismiss();
             });
         }
 
         bottomSheetDialog.show();
     }
-
-
 
 
     private void initViews() {
@@ -256,7 +245,6 @@ public class CustomerActivity extends AppCompatActivity {
         barbes_date_text.setText("Sartarosh: " + customerName);
 //        date_text.setText("Bugun: " + LocalDateTime.dateDDMMYY());
         user_id.setText("ID: " + barberUserID);
-
 
 
     }
@@ -303,6 +291,7 @@ public class CustomerActivity extends AppCompatActivity {
         });
 
     }
+
     private void WriteDb(String name, String phone1, String phone2) {
 
         String hourStr = hours.toString();
@@ -386,8 +375,7 @@ public class CustomerActivity extends AppCompatActivity {
                             Log.e("Firestore", "Failed to read slots", task.getException());
                         }
                     });
-        }
-        else {
+        } else {
             Log.e("ReadDb", "Barber ID is empty");
         }
     }
@@ -448,10 +436,10 @@ public class CustomerActivity extends AppCompatActivity {
 
             float slotH = (float) getHeight() / totalMin;
 
-            // ✅ Фон градиенти
+            //  Фон градиенти
             canvas.drawRect(0, 0, getWidth(), getHeight(), bgPaint);
 
-            // ✅ Фақат банд вақтларни чизмага чиқарамиз
+            //  Фақат банд вақтларни чизмага чиқарамиз
             slotPaint.setColor(Color.parseColor("#FFAB91")); // Pastel Orange
 
             for (TimeSlot slot : busy) {
@@ -460,7 +448,7 @@ public class CustomerActivity extends AppCompatActivity {
                 canvas.drawRoundRect(0, top, getWidth(), bottom, 24f, 24f, slotPaint);
             }
 
-            // ✅ Ҳар бир соат учун йўналиш чизиқлари ва вақтлар
+            //  Ҳар бир соат учун йўналиш чизиқлари ва вақтлар
             for (int h = startHour; h <= endHour; h++) {
                 float y = (h - startHour) * 60 * slotH;
                 canvas.drawLine(0, y, getWidth(), y, linePaint);
