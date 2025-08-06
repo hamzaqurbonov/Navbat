@@ -31,4 +31,17 @@ public class LocalDateTime {
         String yy = DateObj.format(FormatObj);
         return yy;
     }
+
+    public static String  datePlusDays (int forward) {
+        java.time.LocalDateTime date = java.time.LocalDateTime.now().plusDays(forward);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        return date.format(formatter);
+    }
+    public static String  dateMinusDays (int daysBefore) {
+        java.time.LocalDateTime date = java.time.LocalDateTime.now().minusDays(daysBefore);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        return date.format(formatter);
+    }
+
+
 }

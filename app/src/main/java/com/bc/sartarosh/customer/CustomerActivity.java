@@ -21,6 +21,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 
 
@@ -60,7 +61,7 @@ public class CustomerActivity extends AppCompatActivity {
 
     private EditText editHour, editMinute;
     private Button addHourBtn;
-    private ImageView backBtn, logoutBtn;
+    private ImageView backBtn, minus_date, plus_date;
     private TimeSlotView timeSlotView;
     private RecyclerView recycler;
     private CustomerAdapter adapter;
@@ -70,9 +71,11 @@ public class CustomerActivity extends AppCompatActivity {
     Toolbar toolbar;
     String  data, dd, mm, yy, min, hours;
     private String barbershopId, customerId, customerName, customerPhone, barberUserID;
-    TextView barbes_date_text, date_text, user_id;
+    TextView barbes_date_text, date_text, user_id, barbes_date;
     Spinner spinner_min, spinner_hours;
     String getName, getPhone1, getPhone2, userID;
+    int clickPlusCount = 0, plusDD;
+    ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,16 +106,47 @@ public class CustomerActivity extends AppCompatActivity {
         mm = LocalDateTime.dateMM();
         yy = LocalDateTime.dateYYYY();
         data = LocalDateTime.dateDDMMYY();
-
-        Log.d("demo56", "version: " +  dd + " - " + mm + " - " + yy + " - " + data );
-
+        barbes_date.setText(data);
+        plusDD = Integer.parseInt(dd);
         ReadDb();
         initListeners();
         findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet() );
 
+        findViewById(R.id.minus_date).setOnClickListener(v -> minusDate() );
+
+        findViewById(R.id.plus_date).setOnClickListener(v -> plusDate() );
+
 
     }
 
+    private void plusDate() {
+        if(clickPlusCount <= 2) {
+            clickPlusCount++;
+            plusDD = Integer.parseInt(dd) + clickPlusCount;
+            String date = LocalDateTime.datePlusDays(clickPlusCount);
+            barbes_date.setText(date);
+            Log.d("TAG5", "plusDate: " + plusDD);
+            ReadDb();
+        } else {
+            Toast.makeText(this, "Keyingi sanaga o'tib bo'lmaydi", Toast.LENGTH_SHORT).show();
+        }
+    }
+    private void minusDate() {
+        if(clickPlusCount >= 1) {
+            clickPlusCount--;
+            plusDD = Integer.parseInt(dd) + clickPlusCount;
+            String date = LocalDateTime.datePlusDays(clickPlusCount);
+            barbes_date.setText(date);
+            Log.d("TAG5", "minusDate: " + plusDD);
+            ReadDb();
+        } else {
+            Toast.makeText(this, "Keyingi sanaga o'tib bo'lmaydi", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private int setDate(int data) {
+        return data;
+    }
 
     private void customerReadDb() {
 
@@ -209,17 +243,18 @@ public class CustomerActivity extends AppCompatActivity {
 
     private void initViews() {
         barbes_date_text = findViewById(R.id.barbes_date_text);
-        date_text = findViewById(R.id.date_text);
+        progressBar = findViewById(R.id.progressBar);
         backBtn = findViewById(R.id.back_Button);
         user_id = findViewById(R.id.user_id);
         recycler = findViewById(R.id.recycler);
+        barbes_date = findViewById(R.id.barbes_date);
 
 
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         barbes_date_text.setText("Sartarosh: " + customerName);
-        date_text.setText("Bugun: " + LocalDateTime.dateDDMMYY());
+//        date_text.setText("Bugun: " + LocalDateTime.dateDDMMYY());
         user_id.setText("ID: " + barberUserID);
 
 
@@ -297,7 +332,8 @@ public class CustomerActivity extends AppCompatActivity {
         item.put("phone1", phone1);
         item.put("phone2", phone2);
         item.put("data", data);
-        item.put("day-time", dd);
+        String stringPlusDD = String.format("%02d", plusDD);
+        item.put("day-time", stringPlusDD);
 
         db.collection("Barbers").document(barbershopId).collection("Customer1")
                 .add(item)
@@ -308,11 +344,14 @@ public class CustomerActivity extends AppCompatActivity {
     }
 
     public void ReadDb() {
-
+        progressBar.setVisibility(View.VISIBLE);
+        Log.d("TAG5", "ReadDb: " + plusDD);
+        String stringPlusDD = String.format("%02d", plusDD);
+        Log.d("TAG5", "ReadDb stringPlusDD: " + stringPlusDD);
         if (!barbershopId.isEmpty()) {
             db.collection("Barbers").document(barbershopId).collection("Customer1")
-                    .whereGreaterThanOrEqualTo("day-time", dd)
-                    .whereLessThanOrEqualTo("day-time", dd + "\uf8ff")
+                    .whereGreaterThanOrEqualTo("day-time", stringPlusDD)
+                    .whereLessThanOrEqualTo("day-time", stringPlusDD + "\uf8ff")
                     .get()
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful() && task.getResult() != null) {
@@ -342,6 +381,7 @@ public class CustomerActivity extends AppCompatActivity {
                             recycler.setLayoutManager(new GridLayoutManager(this, 1));
                             adapter = new CustomerAdapter(this, activityList);
                             recycler.setAdapter(adapter);
+                            progressBar.setVisibility(View.GONE);
                         } else {
                             Log.e("Firestore", "Failed to read slots", task.getException());
                         }

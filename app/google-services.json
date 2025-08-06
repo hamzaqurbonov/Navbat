@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "461867832807-42a22rh7hbib7ri806r9daspdjmgkeht.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bc.sartarosh",
+            "certificate_hash": "d31c486c1b20103ec2a39bf01002243da3d15f54"
+          }
+        },
+        {
           "client_id": "461867832807-4tft8j502ho7bdgpi1sq6ao4lp8irdtp.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
