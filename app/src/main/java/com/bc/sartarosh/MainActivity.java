@@ -3,10 +3,13 @@ package com.bc.sartarosh;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 //import androidx.core.view.Insets;
 
 import com.bc.sartarosh.customer.CustomerActivity;
@@ -26,6 +29,11 @@ import com.google.android.play.core.install.model.UpdateAvailability;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final int RC_SIGN_IN = 1001;
@@ -40,6 +48,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+//        NotificationHelper.showNotification(this, "Салом!", "Бу notification’нинг намунаси.");
+
+
+
+
+
 
         //  AppUpdateManager ини инициализация қиламиз
         appUpdateManager = AppUpdateManagerFactory.create(this);

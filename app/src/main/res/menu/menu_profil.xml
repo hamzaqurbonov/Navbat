@@ -14,4 +14,10 @@
         android:icon="@drawable/common_full_open_on_phone"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/notification"
+        android:title="Bildirishnoma"
+        android:icon="@drawable/common_full_open_on_phone"
+        app:showAsAction="never" />
+
 </menu>

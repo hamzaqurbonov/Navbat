@@ -1,14 +1,20 @@
 package com.bc.sartarosh.customer;
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Shader;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -31,11 +37,14 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bc.sartarosh.LocalDateTime;
 import com.bc.sartarosh.MainActivity;
+import com.bc.sartarosh.NotificationHelper;
 import com.bc.sartarosh.R;
 import com.bc.sartarosh.SharedPreferencesUtil;
 import com.bc.sartarosh.SpinnerAdapter;
@@ -58,7 +67,7 @@ import java.util.List;
 import java.util.Map;
 
 public class CustomerActivity extends AppCompatActivity {
-
+    private static final int NOTIFICATION_PERMISSION_CODE = 101;
     private EditText editHour, editMinute;
     private Button addHourBtn;
     private ImageView backBtn, minus_date, plus_date;
@@ -119,6 +128,29 @@ public class CustomerActivity extends AppCompatActivity {
 
     }
 
+    private void notification() {
+
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        101);
+            } else {
+                // Рухсат берилган, notification чиқариш мумкин
+                NotificationHelper.showNotification(this, "Салом!", "Бу сизга келган хабар.");
+            }
+        } else {
+            // Android 12 ёки қуйироқ — permission керак эмас
+            NotificationHelper.showNotification(this, "Салом!", "Бу сизга келган хабар.");
+        }
+
+    }
+
+
+
     private void plusDate() {
         if (clickPlusCount <= 2) {
             clickPlusCount++;
@@ -145,10 +177,6 @@ public class CustomerActivity extends AppCompatActivity {
         }
     }
 
-    private int setDate(int data) {
-        return data;
-    }
-
     private void customerReadDb() {
 
         db.collection("Customer").document(customerId)
@@ -169,6 +197,9 @@ public class CustomerActivity extends AppCompatActivity {
     }
 
     private void showMaterialTimeBottomSheet() {
+//        notification();
+
+
         // BottomSheetDialog яратиш
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
         View bottomSheetView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_time_picker, null, false);
@@ -278,13 +309,14 @@ public class CustomerActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
             return true;
+        } else if (id == R.id.notification) {
+            checkNotificationPermission();
         }
 
         return super.onOptionsItemSelected(item);
     }
 
     private void initListeners() {
-
         backBtn.setOnClickListener(v -> {
             startActivity(new Intent(this, CustomerBarberActivity.class));
             finish();
@@ -465,5 +497,67 @@ public class CustomerActivity extends AppCompatActivity {
             }
         }
     }
+
+
+
+
+
+
+
+    private void checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    == PackageManager.PERMISSION_GRANTED) {
+                // Permission берилган — хабар юбориш
+                NotificationHelper.showNotification(this, "Салом!", "Сизга билдиришнома юборилди.");
+            } else if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                // Рухсат олдин рад этилган, тушунтириш бериш мумкин
+                showRationaleDialog();
+            } else {
+                // Биринчи марта ёки "Don't ask again" танланган
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        NOTIFICATION_PERMISSION_CODE);
+            }
+        } else {
+            // Android 12 ёки паст — permission керак эмас
+            NotificationHelper.showNotification(this, "Салом!", "Сизга билдиришнома юборилди.");
+        }
+    }
+
+    private void showRationaleDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Билдиришномалар учун рухсат")
+                .setMessage("Илованинг билдиришнома чиқариши учун рухсат керак. Рухсатни қайта ёқиш учун илова созламаларига ўтинг.")
+                .setPositiveButton("Созламаларга ўтиш", (dialog, which) -> {
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    Uri uri = Uri.fromParts("package", getPackageName(), null);
+                    intent.setData(uri);
+                    startActivity(intent);
+                })
+                .setNegativeButton("Бекор қилиш", null)
+                .show();
+    }
+
+    // Permission натижасини қабул қилиш
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String[] permissions,
+                                           int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == NOTIFICATION_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Рухсат берилди
+                NotificationHelper.showNotification(this, "Салом!", "Сизга билдиришнома юборилди.");
+            } else {
+                // Рухсат берилмади
+                showRationaleDialog(); // Фойдаланувчига оғоҳлантириш
+            }
+        }
+    }
+
+
+
 
 }

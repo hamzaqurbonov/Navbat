@@ -1,14 +1,20 @@
 package com.bc.sartarosh.profil;
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Shader;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -29,11 +35,14 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bc.sartarosh.LocalDateTime;
 import com.bc.sartarosh.MainActivity;
+import com.bc.sartarosh.NotificationHelper;
 import com.bc.sartarosh.R;
 import com.bc.sartarosh.SharedPreferencesUtil;
 import com.bc.sartarosh.SpinnerAdapter;
@@ -54,7 +63,7 @@ import java.util.List;
 import java.util.Map;
 
 public class BarberActivity extends AppCompatActivity {
-
+    private static final int NOTIFICATION_PERMISSION_CODE = 101;
     private EditText editHour, editMinute;
     private Button addHourButton;
     private TimeSlotView timeSlotView;
@@ -258,6 +267,8 @@ public class BarberActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
             return true;
+        }else if (id == R.id.notification) {
+            checkNotificationPermission();
         }
 
         return super.onOptionsItemSelected(item);
@@ -268,20 +279,20 @@ public class BarberActivity extends AppCompatActivity {
         container.addView(timeSlotView, new FrameLayout.LayoutParams((int) (getResources().getDisplayMetrics().density * 80), ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
-    private void logout() {
-        FirebaseAuth.getInstance().signOut();
-
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestIdToken(getString(R.string.default_web_client_id)).requestEmail().build();
-
-        GoogleSignIn.getClient(this, gso).signOut();
-
-        getSharedPreferences("app_prefs", MODE_PRIVATE).edit().clear().apply();
-
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
-    }
+//    private void logout() {
+//        FirebaseAuth.getInstance().signOut();
+//
+//        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestIdToken(getString(R.string.default_web_client_id)).requestEmail().build();
+//
+//        GoogleSignIn.getClient(this, gso).signOut();
+//
+//        getSharedPreferences("app_prefs", MODE_PRIVATE).edit().clear().apply();
+//
+//        Intent intent = new Intent(this, MainActivity.class);
+//        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+//        startActivity(intent);
+//        finish();
+//    }
 
     private void writeDb() {
         String hourStr = hours.toString();
@@ -313,7 +324,7 @@ public class BarberActivity extends AppCompatActivity {
 
         String uid = mAuth.getCurrentUser().getUid();
         db.collection("Barbers").document(uid).collection("Customer1").add(item).addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId())).addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
-
+        NotificationHelper.showNotification(this, "Навбат банд этилди", data + " " + slot);
     }
 
     public void readDb() {
@@ -420,10 +431,10 @@ public class BarberActivity extends AppCompatActivity {
 
             float slotH = (float) getHeight() / totalMin;
 
-            // ✅ Фон градиенти
+            //  Фон градиенти
             canvas.drawRect(0, 0, getWidth(), getHeight(), bgPaint);
 
-            // ✅ Фақат банд вақтларни чизмага чиқарамиз
+            // Фақат банд вақтларни чизмага чиқарамиз
             slotPaint.setColor(Color.parseColor("#FFAB91")); // Pastel Orange
 
             for (TimeSlot slot : busy) {
@@ -432,7 +443,7 @@ public class BarberActivity extends AppCompatActivity {
                 canvas.drawRoundRect(0, top, getWidth(), bottom, 24f, 24f, slotPaint);
             }
 
-            // ✅ Ҳар бир соат учун йўналиш чизиқлари ва вақтлар
+            //  Ҳар бир соат учун йўналиш чизиқлари ва вақтлар
             for (int h = startHour; h <= endHour; h++) {
                 float y = (h - startHour) * 60 * slotH;
                 canvas.drawLine(0, y, getWidth(), y, linePaint);
@@ -446,6 +457,61 @@ public class BarberActivity extends AppCompatActivity {
             public TimeSlot(LocalTime s, LocalTime e) {
                 start = s;
                 end = e;
+            }
+        }
+    }
+
+    /// ---------------Bildirishnoma--------
+
+    private void checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    == PackageManager.PERMISSION_GRANTED) {
+                // Permission берилган — хабар юбориш
+                NotificationHelper.showNotification(this, "Sizda bildirishnoma yoqilgan!", "");
+            } else if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                // Рухсат олдин рад этилган, тушунтириш бериш мумкин
+                showRationaleDialog();
+            } else {
+                // Биринчи марта ёки "Don't ask again" танланган
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        NOTIFICATION_PERMISSION_CODE);
+            }
+        } else {
+            // Android 12 ёки паст — permission керак эмас
+            NotificationHelper.showNotification(this, "Sizda bildirishnoma yoqilgan!", "");
+        }
+    }
+
+    private void showRationaleDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Билдиришномалар учун рухсат")
+                .setMessage("Илованинг билдиришнома чиқариши учун рухсат керак. Рухсатни қайта ёқиш учун илова созламаларига ўтинг.")
+                .setPositiveButton("Созламаларга ўтиш", (dialog, which) -> {
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    Uri uri = Uri.fromParts("package", getPackageName(), null);
+                    intent.setData(uri);
+                    startActivity(intent);
+                })
+                .setNegativeButton("Бекор қилиш", null)
+                .show();
+    }
+
+    // Permission натижасини қабул қилиш
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String[] permissions,
+                                           int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == NOTIFICATION_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Рухсат берилди
+                NotificationHelper.showNotification(this, "Салом!", "Сизга билдиришнома юборилди.");
+            } else {
+                // Рухсат берилмади
+                showRationaleDialog(); // Фойдаланувчига оғоҳлантириш
             }
         }
     }

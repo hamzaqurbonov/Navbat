@@ -38,6 +38,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -301,6 +302,20 @@ public class LoginActivity extends AppCompatActivity {
             if (task.isSuccessful()) {
                 FirebaseUser user = mAuth.getCurrentUser();
                 Toast.makeText(this, "Kirish muvaffaqiyatli", Toast.LENGTH_SHORT).show();
+
+                // TOKEN ОЛИШ ВА САҚЛАШ Билдиришнома
+                FirebaseMessaging.getInstance().getToken().addOnCompleteListener(tokenTask -> {
+                    if (tokenTask.isSuccessful()) {
+                        String token = tokenTask.getResult();
+                        FirebaseFirestore.getInstance()
+                                .collection("Barbers")
+                                .document(user.getUid()) // 👈 Барбернинг ID си
+                                .update("fcmToken", token);
+                    }
+                });
+
+
+
                 register();
 
 
