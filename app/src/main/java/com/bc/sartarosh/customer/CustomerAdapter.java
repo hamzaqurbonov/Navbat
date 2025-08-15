@@ -61,7 +61,7 @@ public class CustomerAdapter extends RecyclerView.Adapter< RecyclerView.ViewHold
 
 
         if(!Objects.equals(getCustomerUserID, ((CustomerAdapter.HomeViewAdapterHolder) holder).customerUserID)){
-            Log.d("TAG4", "onBindViewHolder: " + getCustomerUserID + " : " +((CustomerAdapter.HomeViewAdapterHolder) holder).customerUserID );
+            Log.d("TAG4", "onBindViewHolder: " + DocId  + " " + getCustomerUserID + " " + ((CustomerAdapter.HomeViewAdapterHolder) holder).customerUserID);
             ((CustomerAdapter.HomeViewAdapterHolder) holder).deleteSelect.setVisibility(View.GONE);
         }
 

@@ -53,6 +53,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.Source;
 
 import java.time.Duration;
 import java.time.LocalTime;
@@ -96,6 +97,7 @@ public class BarberActivity extends AppCompatActivity {
         initViews();
         addTimeSlotView();
         readDb();
+
 
 
 //        userButton.setOnClickListener(v -> logout());
@@ -159,19 +161,58 @@ public class BarberActivity extends AppCompatActivity {
 
     public void barbesReadDb() {
         db.collection("Barbers").document(barbershopId)
-                .get().addOnSuccessListener(documentSnapshot -> {
+                .get(Source.SERVER).addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         BarberProfile profile = documentSnapshot.toObject(BarberProfile.class);
+
+                        Log.e("readDb", "Xatolik: 1 " + profile.getUserID());
+
+
 
                         if (profile != null) {
 
                             user_id.setText("ID " + profile.getUserID());
                             barbes_date_text.setText(profile.getName());
                         }
+
+                        if(profile.getUserID() == null || profile.getFcmToken() == null) {
+                            Log.e("readDb", "Xatolik: 2" );
+                            Intent intent = new Intent(this, LoginActivity.class);
+                            startActivity(intent);
+                            finish();
+                        }
                     }
                 }).addOnFailureListener(e -> {
                     Log.e("readDb", "Xatolik: " + e.getMessage());
                 });
+//
+//        db.collection("Barbers").document(barbershopId)
+//                .addSnapshotListener((snapshot, e) -> {
+//                    if (e != null) return;
+//                    if (snapshot != null && snapshot.exists()) {
+//                        BarberProfile profile = snapshot.toObject(BarberProfile.class);
+//                        Log.e("readDb", "UserID: " + profile.getUserID());
+//
+//                        if (profile != null) {
+//
+//                            user_id.setText("ID " + profile.getUserID());
+//                            barbes_date_text.setText(profile.getName());
+//                        }
+//
+//                            if(profile.getUserID() == null || profile.getFcmToken() == null) {
+//                            Log.e("readDb", "Xatolik: 2" );
+//                            Intent intent = new Intent(this, LoginActivity.class);
+//                            startActivity(intent);
+//                            finish();
+//                        }
+//
+//                    }
+//                });
+
+
+
+
+
     }
 
 
@@ -297,6 +338,7 @@ public class BarberActivity extends AppCompatActivity {
     private void writeDb() {
         String hourStr = hours.toString();
         String minuteStr = min.toString();
+        String uid = mAuth.getCurrentUser().getUid();
 
         if (hourStr.isEmpty() || minuteStr.isEmpty()) return;
 
@@ -317,14 +359,15 @@ public class BarberActivity extends AppCompatActivity {
         Map<String, Object> item = new HashMap<>();
         item.put("slot", slot);
         item.put("name", "Sartarosh band etdi");
+        item.put("customerUid", uid);
 //        item.put("phone", customerPhone);
         item.put("data", data);
         String stringPlusDD = String.format("%02d", plusDD);
         item.put("day-time", stringPlusDD);
 
-        String uid = mAuth.getCurrentUser().getUid();
+
         db.collection("Barbers").document(uid).collection("Customer1").add(item).addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId())).addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
-        NotificationHelper.showNotification(this, "Навбат банд этилди", data + " " + slot);
+//        NotificationHelper.showNotification(this, "Навбат банд этилди", data + " " + slot);
     }
 
     public void readDb() {
@@ -374,6 +417,8 @@ public class BarberActivity extends AppCompatActivity {
             recyclerView.setAdapter(adapter);
             progressBar.setVisibility(View.GONE);
         });
+
+
     }
 
     public static class TimeSlotView extends View {
@@ -468,7 +513,7 @@ public class BarberActivity extends AppCompatActivity {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                     == PackageManager.PERMISSION_GRANTED) {
                 // Permission берилган — хабар юбориш
-                NotificationHelper.showNotification(this, "Sizda bildirishnoma yoqilgan!", "");
+                NotificationHelper.showNotification(this, "Салом!", "Сизда билдиришномалар фаоллаштирилди. Энди бемалол фойдаланишингиз мумкин!");
             } else if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
                 // Рухсат олдин рад этилган, тушунтириш бериш мумкин
                 showRationaleDialog();
@@ -508,7 +553,7 @@ public class BarberActivity extends AppCompatActivity {
         if (requestCode == NOTIFICATION_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Рухсат берилди
-                NotificationHelper.showNotification(this, "Салом!", "Сизга билдиришнома юборилди.");
+                NotificationHelper.showNotification(this, "Салом!", "Сизда билдиришномалар фаоллаштирилди. Энди улардан бемалол фойдаланинг!");
             } else {
                 // Рухсат берилмади
                 showRationaleDialog(); // Фойдаланувчига оғоҳлантириш

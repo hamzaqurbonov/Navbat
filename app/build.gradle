@@ -58,4 +58,5 @@ dependencies {
 
     // bildirishnoma
     implementation 'com.google.firebase:firebase-messaging:24.0.0'
+    implementation 'com.google.firebase:firebase-firestore:25.0.0'
 }

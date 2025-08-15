@@ -37,6 +37,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.Transaction;
 import com.google.firebase.messaging.FirebaseMessaging;
 
@@ -70,7 +71,6 @@ public class LoginActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
 
 
         isCustomer = getIntent().getBooleanExtra("Customer", false);
@@ -125,12 +125,12 @@ public class LoginActivity extends AppCompatActivity {
                                 regionMap.put(regionName, new ArrayList<>()); // Агар туманлар бўлмаса
                             }
 
-                            // Мана тайёр regionMap: Вилоят -> Туманлар
+
                             Log.d("Firestore1", "Маълумотлар: " + regionMap.toString() + " " + regionName);
                         }
 
                         setupDocSpinner();
-                        // Мисол: Spinner'ни тўлдириш мумкин
+
 //                        spinner_oblast.setAdapter(new ArrayAdapter<>(LoginActivity.this, android.R.layout.simple_spinner_item, new ArrayList<>(regionMap.keySet())));
                     }
                 })
@@ -152,6 +152,7 @@ public class LoginActivity extends AppCompatActivity {
                 DocName = parentView.getItemAtPosition(position).toString();
                 loadSubDocuments(DocName);
             }
+
             @Override
             public void onNothingSelected(AdapterView<?> parentView) {
                 // Do nothing
@@ -201,6 +202,7 @@ public class LoginActivity extends AppCompatActivity {
                 NameSubDoc = parentView.getItemAtPosition(position).toString();
 //                Toast.makeText(MainActivity.this, "Tanlangan: " + NameSubDoc, Toast.LENGTH_SHORT).show();
             }
+
             @Override
             public void onNothingSelected(AdapterView<?> parentView) {
                 // Do nothing
@@ -214,8 +216,10 @@ public class LoginActivity extends AppCompatActivity {
 
 
     private void register() {
-        String uid = mAuth.getCurrentUser().getUid();
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) return;
 
+        String uid = user.getUid();
         String name = edit_name.getText().toString();
         String province = DocName;
         String region = NameSubDoc;
@@ -223,52 +227,71 @@ public class LoginActivity extends AppCompatActivity {
         String phone1 = edit_phone.getText().toString();
         String phone2 = edit_phone2.getText().toString();
 
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
         DocumentReference userRef = isCustomer ? db.collection("Customer").document(uid) : db.collection("Barbers").document(uid);
 
-        // 1. Аввал мавжуд user ҳужжатини текширамиз
-        userRef.get().addOnSuccessListener(documentSnapshot -> {
-            if (documentSnapshot.exists() && documentSnapshot.contains("userID")) {
-//                //  Аллақачон ID берилган — қайта яратмаймиз
-//                Log.d("REGISTER1", "Мавжуд userID: " + documentSnapshot.getString("userID"));
-                SharedPreferencesUtil.saveString(this, "customerUserID", documentSnapshot.getString("userID"));
-            } else {
-                // Янги user учун ID яратиш
-                DocumentReference counterRef = db.collection("UserID").document("users_counter");
-
-                db.runTransaction((Transaction.Function<Void>) transaction -> {
-                    DocumentSnapshot snapshot = transaction.get(counterRef);
-                    long lastId = snapshot.contains("last_id") ? snapshot.getLong("last_id") : 0;
-                    long newId = lastId + 1;
-                    String formattedId = String.format("%04d", newId); // 00001, 00002, ...
-
-                    Map<String, Object> profile = new HashMap<>();
-                    profile.put("name", name);
-                    if (!isCustomer) {
-                        profile.put("province", province);
-                        profile.put("region", region);
-                        profile.put("address", address);
-                    }
-                    profile.put("phone1", phone1);
-                    profile.put("phone2", phone2);
-                    profile.put("userID", formattedId);
-                    SharedPreferencesUtil.saveString(this, "customerUserID", formattedId);
-
-                    // 2. Фойдаланувчи ҳужжатини яратиш
-                    transaction.set(userRef, profile);
-
-                    // 3. Сўнгги IDни янгилаш
-                    transaction.update(counterRef, "last_id", newId);
-
-                    return null;
-                }).addOnSuccessListener(unused -> {
-                    Log.d("REGISTER", "Янги userID берилди ва сақланди");
-                }).addOnFailureListener(e -> {
-                    Log.e("REGISTER", "Transaction хатоси: " + e.getMessage());
-                });
+        // TOKEN оламиз
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(tokenTask -> {
+            if (!tokenTask.isSuccessful()) {
+                Log.e("FCM", "Токен олишда хатолик", tokenTask.getException());
+                return;
             }
-        }).addOnFailureListener(e -> {
-            Log.e("REGISTER", "Фойдаланувчини текширишда хатолик: " + e.getMessage());
+            String token = tokenTask.getResult();
+
+            db.runTransaction((Transaction.Function<Void>) transaction -> {
+                        DocumentSnapshot snapshot = transaction.get(userRef);
+
+                        long newId;
+                        if (snapshot.exists() && snapshot.contains("userID")) {
+                            // Мавжуд user, ID ўзгармайди
+                            newId = Long.parseLong(snapshot.getString("userID"));
+
+
+
+
+
+
+                        } else {
+                            // Янги user
+                            DocumentReference counterRef = db.collection("UserID").document("users_counter");
+                            DocumentSnapshot counterSnap = transaction.get(counterRef);
+                            long lastId = counterSnap.contains("last_id") ? counterSnap.getLong("last_id") : 0;
+                            newId = lastId + 1;
+                            transaction.update(counterRef, "last_id", newId);
+                        }
+
+                        profile.put("name", name);
+                        profile.put("phone1", phone1);
+                        profile.put("phone2", phone2);
+                        profile.put("fcmToken", token);
+                        profile.put("userID", String.format("%04d", newId));
+                        SharedPreferencesUtil.saveString(this, "customerUserID", String.format("%04d", newId));
+                        Log.d("TAG4", "LoginAct: " +  String.format("%04d", newId));
+                        if (!isCustomer) {
+                            profile.put("province", province);
+                            profile.put("region", region);
+                            profile.put("address", address);
+                        }
+
+                        transaction.set(userRef, profile, SetOptions.merge());
+                        return null;
+                    }).addOnSuccessListener(unused -> {
+                        Log.d("REGISTER", "Маълумотлар сақланди");
+
+                        // CustomerActivity'га ўтиш
+                        if (isCustomer) {
+                            SharedPreferencesUtil.saveString(this, "CustomerMain", "CustomerMain");
+                            SharedPreferencesUtil.saveString(this, "CustomerID", user.getUid());
+
+                            startActivity(new Intent(LoginActivity.this, CustomerBarberActivity.class));
+
+                        } else {
+                            SharedPreferencesUtil.saveString(this, "BarbesID", user.getUid());
+                            startActivity(new Intent(LoginActivity.this, BarberActivity.class));
+                        }
+
+                        finish();
+                    })
+                    .addOnFailureListener(e -> Log.e("REGISTER", "Transaction хатоси", e));
         });
     }
 
@@ -301,38 +324,27 @@ public class LoginActivity extends AppCompatActivity {
         mAuth.signInWithCredential(credential).addOnCompleteListener(this, task -> {
             if (task.isSuccessful()) {
                 FirebaseUser user = mAuth.getCurrentUser();
-                Toast.makeText(this, "Kirish muvaffaqiyatli", Toast.LENGTH_SHORT).show();
 
-                // TOKEN ОЛИШ ВА САҚЛАШ Билдиришнома
-                FirebaseMessaging.getInstance().getToken().addOnCompleteListener(tokenTask -> {
-                    if (tokenTask.isSuccessful()) {
-                        String token = tokenTask.getResult();
-                        FirebaseFirestore.getInstance()
-                                .collection("Barbers")
-                                .document(user.getUid()) // 👈 Барбернинг ID си
-                                .update("fcmToken", token);
-                    }
-                });
 
 
 
                 register();
 
+                Toast.makeText(this, "Kirish muvaffaqiyatli", Toast.LENGTH_SHORT).show();
+//                // CustomerActivity'га ўтиш
+//                if (isCustomer) {
+//                    SharedPreferencesUtil.saveString(this, "CustomerMain", "CustomerMain");
+//                    SharedPreferencesUtil.saveString(this, "CustomerID", user.getUid());
+//
+//                    startActivity(new Intent(LoginActivity.this, CustomerBarberActivity.class));
+//
+//                } else {
+//                    SharedPreferencesUtil.saveString(this, "BarbesID", user.getUid());
+//                    startActivity(new Intent(LoginActivity.this, BarberActivity.class));
+//                }
 
-                // CustomerActivity'га ўтиш
-                if (isCustomer) {
-                    SharedPreferencesUtil.saveString(this, "CustomerMain", "CustomerMain");
-                    SharedPreferencesUtil.saveString(this, "CustomerID", user.getUid());
-
-                    startActivity(new Intent(LoginActivity.this, CustomerBarberActivity.class));
-
-                } else {
-                    SharedPreferencesUtil.saveString(this, "BarbesID", user.getUid());
-                    startActivity(new Intent(LoginActivity.this, BarberActivity.class));
-                }
 
 
-                finish();
             } else {
                 Toast.makeText(this, "Authentication failed", Toast.LENGTH_SHORT).show();
             }

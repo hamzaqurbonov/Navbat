@@ -7,11 +7,12 @@ public class BarberProfile {
     private String region;
     private String address;
     private String userID;
+    private String fcmToken;
 
     // Bo'sh konstruktor (Firestore uchun zarur)
     public BarberProfile() {}
 
-    public BarberProfile(String name, String phone1, String phone2, String province, String region, String address, String userID) {
+    public BarberProfile(String name, String phone1, String phone2, String province, String region, String address, String userID, String fcmToken) {
         this.name = name;
         this.phone1 = phone1;
         this.phone2 = phone2;
@@ -19,6 +20,7 @@ public class BarberProfile {
         this.region = region;
         this.address = address;
         this.userID = userID;
+        this.fcmToken = fcmToken;
     }
 
     public String getName() {
@@ -52,6 +54,10 @@ public class BarberProfile {
     // ⚙️ Agar kerak bo‘lsa, setterlar ham qo‘shing:
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getFcmToken() {
+        return fcmToken;
     }
 
     public void setPhone1(String phone1) {

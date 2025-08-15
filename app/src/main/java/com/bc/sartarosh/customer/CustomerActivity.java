@@ -51,6 +51,7 @@ import com.bc.sartarosh.SpinnerAdapter;
 import com.bc.sartarosh.TimeModel;
 import com.bc.sartarosh.profil.BarberProfile;
 import com.bc.sartarosh.profil.EditProfileActivity;
+import com.bc.sartarosh.profil.LoginActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
@@ -82,7 +83,7 @@ public class CustomerActivity extends AppCompatActivity {
     private String barbershopId, customerId, customerName, customerPhone, barberUserID;
     TextView barbes_date_text, date_text, user_id, barbes_date;
     Spinner spinner_min, spinner_hours;
-    String getName, getPhone1, getPhone2, userID;
+    String getName, getPhone1, getPhone2, userID, fcmToken;
     int clickPlusCount = 0, plusDD;
     ProgressBar progressBar;
 
@@ -125,7 +126,7 @@ public class CustomerActivity extends AppCompatActivity {
 
         findViewById(R.id.plus_date).setOnClickListener(v -> plusDate());
 
-
+//        customerReadDb();
     }
 
     private void notification() {
@@ -189,7 +190,19 @@ public class CustomerActivity extends AppCompatActivity {
                             getPhone1 = profile.getPhone1();
                             getPhone2 = profile.getPhone2();
                             userID = profile.getUserID();
-                            WriteDb(getName, getPhone1, getPhone2);
+                            fcmToken = profile.getFcmToken();
+
+                            Log.d("TAG6", "customerReadDb: 1");
+                            if(userID == null || fcmToken == null) {
+                                Intent intent = new Intent(this, LoginActivity.class);
+                                Log.d("TAG6", "customerReadDb: 2");
+
+                                intent.putExtra("Customer", true);
+                                startActivity(intent);
+                                finish();
+                            } else {
+                                WriteDb(getName, getPhone1, getPhone2);
+                            }
                         }
                     }
                 })
@@ -348,6 +361,7 @@ public class CustomerActivity extends AppCompatActivity {
         Map<String, Object> item = new HashMap<>();
         item.put("slot", slot);
         item.put("barberUserID", barberUserID);
+        item.put("customerUid", customerId);
         item.put("customerUserID", userID);
         item.put("name", name);
         item.put("phone1", phone1);
@@ -509,7 +523,7 @@ public class CustomerActivity extends AppCompatActivity {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                     == PackageManager.PERMISSION_GRANTED) {
                 // Permission берилган — хабар юбориш
-                NotificationHelper.showNotification(this, "Салом!", "Сизга билдиришнома юборилди.");
+                NotificationHelper.showNotification(this, "Салом!", "Сизда билдиришномалар фаоллаштирилди. Энди бемалол фойдаланишингиз мумкин!");
             } else if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
                 // Рухсат олдин рад этилган, тушунтириш бериш мумкин
                 showRationaleDialog();
@@ -549,7 +563,7 @@ public class CustomerActivity extends AppCompatActivity {
         if (requestCode == NOTIFICATION_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Рухсат берилди
-                NotificationHelper.showNotification(this, "Салом!", "Сизга билдиришнома юборилди.");
+                NotificationHelper.showNotification(this, "Салом!", "Сизда билдиришномалар фаоллаштирилди. Энди улардан бемалол фойдаланинг!");
             } else {
                 // Рухсат берилмади
                 showRationaleDialog(); // Фойдаланувчига оғоҳлантириш

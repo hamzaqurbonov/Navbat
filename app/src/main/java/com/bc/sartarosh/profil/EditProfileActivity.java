@@ -30,7 +30,7 @@ public class EditProfileActivity extends AppCompatActivity {
     private EditText edit_name, edit_address, edit_phone, edit_phone2;
     private Spinner spinner_oblast, spinner_region;
 
-    private String customerId, barbesId, docType, userID;
+    private String customerId, barbesId, docType, userID, fcmToken;
     private boolean isCustomer;
 
     private String selectedOblast, selectedRegion;
@@ -85,6 +85,7 @@ public class EditProfileActivity extends AppCompatActivity {
                             edit_phone.setText(profile.getPhone1());
                             edit_phone2.setText(profile.getPhone2());
                             userID = (profile.getUserID());
+                            fcmToken = (profile.getFcmToken());
                         }
                     }
                 })
@@ -97,6 +98,7 @@ public class EditProfileActivity extends AppCompatActivity {
         profile.put("phone1", edit_phone.getText().toString());
         profile.put("phone2", edit_phone2.getText().toString());
         profile.put("userID", userID);
+        profile.put("fcmToken", fcmToken);
 
         if (!isCustomer) {
             profile.put("province", selectedOblast);
