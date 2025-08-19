@@ -58,6 +58,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.Source;
 
 import java.time.Duration;
 import java.time.LocalTime;
@@ -83,7 +84,7 @@ public class CustomerActivity extends AppCompatActivity {
     private String barbershopId, customerId, customerName, customerPhone, barberUserID;
     TextView barbes_date_text, date_text, user_id, barbes_date;
     Spinner spinner_min, spinner_hours;
-    String getName, getPhone1, getPhone2, userID, fcmToken;
+    String getName, getPhone1, getPhone2, userID, fcmToken, hairTime, beardTime;
     int clickPlusCount = 0, plusDD;
     ProgressBar progressBar;
 
@@ -118,6 +119,7 @@ public class CustomerActivity extends AppCompatActivity {
         data = LocalDateTime.dateDDMMYY();
         barbes_date.setText(data);
         plusDD = Integer.parseInt(dd);
+        barbesReadDb();
         ReadDb();
         initListeners();
         findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet());
@@ -178,13 +180,30 @@ public class CustomerActivity extends AppCompatActivity {
         }
     }
 
+    public void barbesReadDb() {
+        db.collection("Barbers").document(barbershopId)
+                .get().addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        BarberProfile profile = documentSnapshot.toObject(BarberProfile.class);
+
+                        Log.e("readDb", "Xatolik: 1 " + profile.getUserID());
+                        hairTime = profile.getHairTime();
+                        beardTime = profile.getBeardTime();
+
+                    }
+                }).addOnFailureListener(e -> {
+                    Log.e("readDb", "Xatolik: " + e.getMessage());
+                });
+
+    }
+
     private void customerReadDb() {
 
         db.collection("Customer").document(customerId)
                 .get()
                 .addOnSuccessListener(snapshot -> {
                     if (snapshot.exists()) {
-                        BarberProfile profile = snapshot.toObject(BarberProfile.class);
+                        CustomerModel profile = snapshot.toObject(CustomerModel.class);
                         if (profile != null) {
                             getName = profile.getName();
                             getPhone1 = profile.getPhone1();
@@ -352,7 +371,7 @@ public class CustomerActivity extends AppCompatActivity {
             return;
         }
 
-        int endMinute = startMinute + 40;
+        int endMinute = Integer.parseInt(startMinute + hairTime);
         int endHour = hour + (endMinute >= 60 ? 1 : 0);
         endMinute = endMinute % 60;
 

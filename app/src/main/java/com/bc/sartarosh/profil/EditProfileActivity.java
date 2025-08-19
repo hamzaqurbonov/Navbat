@@ -27,7 +27,7 @@ import java.util.Map;
 public class EditProfileActivity extends AppCompatActivity {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private EditText edit_name, edit_address, edit_phone, edit_phone2;
+    private EditText edit_name, edit_address, edit_phone, edit_phone2, edit_hair_time,  edit_beard_time, edit_strictStartHour, edit_strictEndHour;
     private Spinner spinner_oblast, spinner_region;
 
     private String customerId, barbesId, docType, userID, fcmToken;
@@ -57,6 +57,10 @@ public class EditProfileActivity extends AppCompatActivity {
             spinner_oblast.setVisibility(View.GONE);
             spinner_region.setVisibility(View.GONE);
             edit_address.setVisibility(View.GONE);
+            edit_hair_time.setVisibility(View.GONE);
+            edit_beard_time.setVisibility(View.GONE);
+            edit_strictStartHour.setVisibility(View.GONE);
+            edit_strictEndHour.setVisibility(View.GONE);
         }
     }
 
@@ -67,6 +71,10 @@ public class EditProfileActivity extends AppCompatActivity {
         edit_phone2 = findViewById(R.id.edit_phone2);
         spinner_oblast = findViewById(R.id.spinner_oblast);
         spinner_region = findViewById(R.id.spinner_region);
+        edit_hair_time = findViewById(R.id.edit_hair_time);
+        edit_beard_time = findViewById(R.id.edit_beard_time);
+        edit_strictStartHour = findViewById(R.id.edit_strictStartHour);
+        edit_strictEndHour = findViewById(R.id.edit_strictEndHour);
         findViewById(R.id.save_btn).setOnClickListener(v -> saveProfile());
     }
 
@@ -84,6 +92,10 @@ public class EditProfileActivity extends AppCompatActivity {
                             edit_address.setText(profile.getAddress());
                             edit_phone.setText(profile.getPhone1());
                             edit_phone2.setText(profile.getPhone2());
+                            edit_hair_time.setText(profile.getHairTime());
+                            edit_beard_time.setText(profile.getBeardTime());
+                            edit_strictStartHour.setText(profile.getStrictStartHour());
+                            edit_strictEndHour.setText(profile.getStrictEndHour());
                             userID = (profile.getUserID());
                             fcmToken = (profile.getFcmToken());
                         }
@@ -104,6 +116,10 @@ public class EditProfileActivity extends AppCompatActivity {
             profile.put("province", selectedOblast);
             profile.put("region", selectedRegion);
             profile.put("address", edit_address.getText().toString());
+            profile.put("hairTime", edit_hair_time.getText().toString());
+            profile.put("beardTime", edit_beard_time.getText().toString());
+            profile.put("strictStartHour", edit_strictStartHour.getText().toString());
+            profile.put("strictEndHour", edit_strictEndHour.getText().toString());
         }
 
         String uid = isCustomer ? customerId : barbesId;

@@ -17,12 +17,12 @@ public class CustomerBarberAdapter extends RecyclerView.Adapter< RecyclerView.Vi
 
     private RecyclerViewClickListner listner;
     //    EditHameViewActivity homeViewActivity;
-    List<CustomerModel> activityllist ;
+    List<CustomerBarbesModel> activityllist ;
     private CustomerBarberActivity barberActivity;
 
 
 
-    public CustomerBarberAdapter(  List<CustomerModel> activityllist, RecyclerViewClickListner listner) {
+    public CustomerBarberAdapter(  List<CustomerBarbesModel> activityllist, RecyclerViewClickListner listner) {
         this.activityllist = activityllist;
 //        this.barberActivity = barberActivity;
             this.listner = listner;

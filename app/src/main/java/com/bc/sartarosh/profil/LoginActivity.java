@@ -270,6 +270,10 @@ public class LoginActivity extends AppCompatActivity {
                             profile.put("province", province);
                             profile.put("region", region);
                             profile.put("address", address);
+                            profile.put("hairTime", "40");
+                            profile.put("beardTime", "20");
+                            profile.put("strictStartHour", "8");
+                            profile.put("strictEndHour", "18");
                         }
 
                         transaction.set(userRef, profile, SetOptions.merge());
@@ -323,28 +327,8 @@ public class LoginActivity extends AppCompatActivity {
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
         mAuth.signInWithCredential(credential).addOnCompleteListener(this, task -> {
             if (task.isSuccessful()) {
-                FirebaseUser user = mAuth.getCurrentUser();
-
-
-
-
                 register();
-
                 Toast.makeText(this, "Kirish muvaffaqiyatli", Toast.LENGTH_SHORT).show();
-//                // CustomerActivity'га ўтиш
-//                if (isCustomer) {
-//                    SharedPreferencesUtil.saveString(this, "CustomerMain", "CustomerMain");
-//                    SharedPreferencesUtil.saveString(this, "CustomerID", user.getUid());
-//
-//                    startActivity(new Intent(LoginActivity.this, CustomerBarberActivity.class));
-//
-//                } else {
-//                    SharedPreferencesUtil.saveString(this, "BarbesID", user.getUid());
-//                    startActivity(new Intent(LoginActivity.this, BarberActivity.class));
-//                }
-
-
-
             } else {
                 Toast.makeText(this, "Authentication failed", Toast.LENGTH_SHORT).show();
             }

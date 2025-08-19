@@ -25,7 +25,7 @@ import java.util.List;
 public class CustomerBarberActivity extends AppCompatActivity {
     RecyclerView recycler;
     CustomerBarberAdapter adapter;
-    List<CustomerModel> activityList = new ArrayList<>();
+    List<CustomerBarbesModel> activityList = new ArrayList<>();
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     Toolbar toolbar;
 
@@ -95,7 +95,7 @@ public class CustomerBarberActivity extends AppCompatActivity {
                     String barbesID = doc.getId();
                     String userID = doc.getString("userID");
 
-                    activityList.add(new CustomerModel(name, phone, barbesID, userID));
+                    activityList.add(new CustomerBarbesModel(name, phone, barbesID, userID));
 
                     updateRecycler();
                 })
@@ -114,7 +114,7 @@ public class CustomerBarberActivity extends AppCompatActivity {
                             String barbesID = doc.getId();
                             String userID = doc.getString("userID");
 
-                            activityList.add(new CustomerModel(name, phone, barbesID, userID));
+                            activityList.add(new CustomerBarbesModel(name, phone, barbesID, userID));
                         }
 
                         updateRecycler();
@@ -128,14 +128,14 @@ public class CustomerBarberActivity extends AppCompatActivity {
         recycler.setLayoutManager(new GridLayoutManager(this, 1));
 
         adapter = new CustomerBarberAdapter(activityList, (view, position) -> {
-            CustomerModel model = activityList.get(position);
+            CustomerBarbesModel model = activityList.get(position);
             openCustomerActivity(model);
         });
 
         recycler.setAdapter(adapter);
     }
 
-    private void openCustomerActivity(CustomerModel model) {
+    private void openCustomerActivity(CustomerBarbesModel model) {
         SharedPreferencesUtil.saveString(this, "BarbesID", model.getBarbesId());
         SharedPreferencesUtil.saveString(this, "getName", model.getName());
         SharedPreferencesUtil.saveString(this, "getPhone", model.getPhone());

@@ -1,18 +1,16 @@
 package com.bc.sartarosh.profil;
+
+import java.util.List;
+
 public class BarberProfile {
-    private String name;
-    private String phone1;
-    private String phone2;
-    private String province;
-    private String region;
-    private String address;
-    private String userID;
-    private String fcmToken;
+    private String name, phone1, phone2, province, region, address, userID, fcmToken, hairTime, beardTime, strictEndHour, strictStartHour;
+    private List<BarberMapModel> key;
 
-    // Bo'sh konstruktor (Firestore uchun zarur)
-    public BarberProfile() {}
 
-    public BarberProfile(String name, String phone1, String phone2, String province, String region, String address, String userID, String fcmToken) {
+    public BarberProfile() {
+    }
+
+    public BarberProfile(String name, String phone1, String phone2, String province, String region, String address, String userID, String fcmToken, String hairTime, String beardTime, String strictEndHour, String strictStartHour) {
         this.name = name;
         this.phone1 = phone1;
         this.phone2 = phone2;
@@ -21,6 +19,10 @@ public class BarberProfile {
         this.address = address;
         this.userID = userID;
         this.fcmToken = fcmToken;
+        this.hairTime = hairTime;
+        this.beardTime = beardTime;
+        this.strictStartHour = strictStartHour;
+        this.strictEndHour = strictEndHour;
     }
 
     public String getName() {
@@ -51,7 +53,6 @@ public class BarberProfile {
         return userID;
     }
 
-    // ⚙️ Agar kerak bo‘lsa, setterlar ham qo‘shing:
     public void setName(String name) {
         this.name = name;
     }
@@ -60,27 +61,27 @@ public class BarberProfile {
         return fcmToken;
     }
 
-    public void setPhone1(String phone1) {
-        this.phone1 = phone1;
+    public String getHairTime() {
+        return hairTime;
     }
 
-    public void setPhone2(String phone2) {
-        this.phone2 = phone2;
+    public String getBeardTime() {
+        return beardTime;
     }
 
-    public void setProvince(String province) {
-        this.province = province;
+    public String getStrictEndHour() {
+        return strictEndHour;
     }
 
-    public void setRegion(String region) {
-        this.region = region;
+    public String getStrictStartHour() {
+        return strictStartHour;
     }
 
-    public void setAddress(String address) {
-        this.address = address;
+    public List<BarberMapModel> getKey() {
+        return key;
     }
 
-    public void setUserID(String userID) {
-        this.userID = userID;
+    public void setKey(List<BarberMapModel> key) {
+        this.key = key;
     }
 }

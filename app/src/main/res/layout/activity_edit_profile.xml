@@ -73,6 +73,30 @@
             android:layout_height="wrap_content"
             android:hint="Zahira telefon"
             android:inputType="phone" />
+        <EditText
+            android:id="@+id/edit_hair_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="Soch olish vaqti"
+            android:inputType="phone" />
+        <EditText
+            android:id="@+id/edit_beard_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="Soqol olish vaqti"
+            android:inputType="phone" />
+        <EditText
+            android:id="@+id/edit_strictStartHour"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="Soqol olish vaqti"
+            android:inputType="phone" />
+        <EditText
+            android:id="@+id/edit_strictEndHour"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="Soqol olish vaqti"
+            android:inputType="phone" />
         <Button
             android:id="@+id/save_btn"
             android:layout_width="wrap_content"
