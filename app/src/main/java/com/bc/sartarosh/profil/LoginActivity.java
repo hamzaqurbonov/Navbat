@@ -35,6 +35,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
@@ -55,6 +56,7 @@ public class LoginActivity extends AppCompatActivity {
     private GoogleSignInClient mGoogleSignInClient;
     boolean isCustomer;
     Map<String, Object> profile = new HashMap<>();
+    Map<String, Object> nestedData = new HashMap<>();
     Spinner spinner_oblast, spinner_region;
 
     String DocName, NameSubDoc;
@@ -273,7 +275,11 @@ public class LoginActivity extends AppCompatActivity {
                             profile.put("hairTime", "40");
                             profile.put("beardTime", "20");
                             profile.put("strictStartHour", "8");
-                            profile.put("strictEndHour", "18");
+                            profile.put("strictEndHour", "20");
+                            nestedData.put("date", "");
+                            nestedData.put("startHour", "");
+                            nestedData.put("endHour", "");
+                            profile.put("key", FieldValue.arrayUnion(nestedData));
                         }
 
                         transaction.set(userRef, profile, SetOptions.merge());

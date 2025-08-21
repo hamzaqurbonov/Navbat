@@ -3,20 +3,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/notification"
+        android:title="Bildirishnomani yoqish"
+        android:icon="@drawable/common_full_open_on_phone"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/action_profile"
-        android:title="Profilni o'zgartirish"
+        android:title="Profilni yangilash"
         android:icon="@drawable/user_attributes_24px"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_logout"
         android:title="Chiqish"
-        android:icon="@drawable/common_full_open_on_phone"
-        app:showAsAction="never" />
-
-    <item
-        android:id="@+id/notification"
-        android:title="Bildirishnoma"
         android:icon="@drawable/common_full_open_on_phone"
         app:showAsAction="never" />
 

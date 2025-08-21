@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -16,6 +17,7 @@ import com.bc.sartarosh.R;
 import com.bc.sartarosh.SharedPreferencesUtil;
 import com.bc.sartarosh.SpinnerAdapter;
 import com.bc.sartarosh.customer.CustomerActivity;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -36,6 +38,8 @@ public class EditProfileActivity extends AppCompatActivity {
     private String selectedOblast, selectedRegion;
     private final List<String> oblastList = new ArrayList<>();
     private final List<String> regionList = new ArrayList<>();
+    TextView  textView_oblast, textView_region, textView1, textView2, textView3, textView4;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +65,13 @@ public class EditProfileActivity extends AppCompatActivity {
             edit_beard_time.setVisibility(View.GONE);
             edit_strictStartHour.setVisibility(View.GONE);
             edit_strictEndHour.setVisibility(View.GONE);
+
+            textView_oblast.setVisibility(View.GONE);
+            textView_region.setVisibility(View.GONE);
+            textView1.setVisibility(View.GONE);
+            textView2.setVisibility(View.GONE);
+            textView3.setVisibility(View.GONE);
+            textView4.setVisibility(View.GONE);
         }
     }
 
@@ -75,6 +86,13 @@ public class EditProfileActivity extends AppCompatActivity {
         edit_beard_time = findViewById(R.id.edit_beard_time);
         edit_strictStartHour = findViewById(R.id.edit_strictStartHour);
         edit_strictEndHour = findViewById(R.id.edit_strictEndHour);
+
+        textView_oblast = findViewById(R.id.textView_oblast);
+        textView_region = findViewById(R.id.textView_region);
+        textView1 = findViewById(R.id.textView1);
+        textView2 = findViewById(R.id.textView2);
+        textView3 = findViewById(R.id.textView3);
+        textView4 = findViewById(R.id.textView4);
         findViewById(R.id.save_btn).setOnClickListener(v -> saveProfile());
     }
 
