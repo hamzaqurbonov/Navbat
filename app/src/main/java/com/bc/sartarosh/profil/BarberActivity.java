@@ -106,7 +106,7 @@ public class BarberActivity extends AppCompatActivity {
 
 
     private void plusDate() {
-        if (clickPlusCount <= 2) {
+        if (clickPlusCount <= 1) {
             clickPlusCount++;
             plusDD = Integer.parseInt(dd) + clickPlusCount;
             String date = LocalDateTime.datePlusDays(clickPlusCount);
@@ -182,7 +182,7 @@ public class BarberActivity extends AppCompatActivity {
                     barbes_date_text.setText(profile.getName());
 
                     if (profile.getUserID() == null || profile.getFcmToken() == null ||
-                            profile.getHairTime() == null || profile.getBeardTime() == null) {
+                            profile.getHairTime() == null || profile.getBeardTime() == null || barbershopId == null) {
                         Log.e("readDb", "Xatolik: 2");
                         startActivity(new Intent(this, LoginActivity.class));
                         finish();
@@ -224,9 +224,6 @@ public class BarberActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> Log.e("readDb", "Xatolik: " + e.getMessage()));
     }
-
-
-
 
 
     private void addTimeSlotView() {
@@ -333,6 +330,7 @@ public class BarberActivity extends AppCompatActivity {
             this.busy = list;
             invalidate(); // qayta chiz
         }
+
         public void setStartHour(int startHour, int endHour) {
             this.startHour = startHour;
             this.endHour = endHour;
@@ -413,7 +411,6 @@ public class BarberActivity extends AppCompatActivity {
         db.collection("Barbers").document(uid).collection("Customer1").add(item).addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId())).addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
 //        NotificationHelper.showNotification(this, "Навбат банд этилди", data + " " + slot);
     }
-
 
 
     private void showMaterialTimeBottomSheet() {

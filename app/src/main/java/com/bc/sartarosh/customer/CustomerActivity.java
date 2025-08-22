@@ -155,7 +155,7 @@ public class CustomerActivity extends AppCompatActivity {
 
 
     private void plusDate() {
-        if (clickPlusCount <= 2) {
+        if (clickPlusCount <= 1) {
             clickPlusCount++;
             plusDD = Integer.parseInt(dd) + clickPlusCount;
             String date = LocalDateTime.datePlusDays(clickPlusCount);
@@ -212,7 +212,7 @@ public class CustomerActivity extends AppCompatActivity {
                             fcmToken = profile.getFcmToken();
 
                             Log.d("TAG6", "customerReadDb: 1");
-                            if(userID == null || fcmToken == null) {
+                            if(userID == null || fcmToken == null || customerId == null) {
                                 Intent intent = new Intent(this, LoginActivity.class);
                                 Log.d("TAG6", "customerReadDb: 2");
 
