@@ -37,9 +37,6 @@ public class EditProfileActivity extends AppCompatActivity {
 
     private String customerId, barbesId, docType, userID, fcmToken;
     private boolean isCustomer;
-    Map<String, Object> nestedData1 = new HashMap<>();
-    Map<String, Object> nestedData2 = new HashMap<>();
-    Map<String, Object> nestedData3 = new HashMap<>();
     private String selectedOblast, selectedRegion;
     private final List<String> oblastList = new ArrayList<>();
     private final List<String> regionList = new ArrayList<>();
@@ -78,6 +75,18 @@ public class EditProfileActivity extends AppCompatActivity {
             textView2.setVisibility(View.GONE);
             textView3.setVisibility(View.GONE);
             textView4.setVisibility(View.GONE);
+
+            edit_date_1.setVisibility(View.GONE);
+            edit_date_2.setVisibility(View.GONE);
+            edit_date_3.setVisibility(View.GONE);
+
+            edit_dateStartHour_1.setVisibility(View.GONE);
+            edit_dateStartHour_2.setVisibility(View.GONE);
+            edit_dateStartHour_3.setVisibility(View.GONE);
+
+            edit_dateEndHour_1.setVisibility(View.GONE);
+            edit_dateEndHour_2.setVisibility(View.GONE);
+            edit_dateEndHour_3.setVisibility(View.GONE);
         }
     }
 
