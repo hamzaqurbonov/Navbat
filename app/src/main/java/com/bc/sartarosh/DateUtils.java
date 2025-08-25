@@ -2,7 +2,7 @@ package com.bc.sartarosh;
 
 import java.time.format.DateTimeFormatter;
 
-public class LocalDateTime {
+public class DateUtils {
 
     public static String dateDD () {
         java.time.LocalDateTime DateObj = java.time.LocalDateTime.now();

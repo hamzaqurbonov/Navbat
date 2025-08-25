@@ -42,13 +42,16 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bc.sartarosh.LocalDateTime;
+import com.bc.sartarosh.DateUtils;
+//import com.bc.sartarosh.LocalDateTime;
 import com.bc.sartarosh.MainActivity;
 import com.bc.sartarosh.NotificationHelper;
 import com.bc.sartarosh.R;
 import com.bc.sartarosh.SharedPreferencesUtil;
 import com.bc.sartarosh.SpinnerAdapter;
 import com.bc.sartarosh.TimeModel;
+import com.bc.sartarosh.profil.BarberActivity;
+import com.bc.sartarosh.profil.BarberMapModel;
 import com.bc.sartarosh.profil.BarberProfile;
 import com.bc.sartarosh.profil.EditProfileActivity;
 import com.bc.sartarosh.profil.LoginActivity;
@@ -61,6 +64,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.Source;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -113,55 +117,47 @@ public class CustomerActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.MATCH_PARENT
         ));
 
-        dd = LocalDateTime.dateDD();
-        mm = LocalDateTime.dateMM();
-        yy = LocalDateTime.dateYYYY();
-        data = LocalDateTime.dateDDMMYY();
+        dd = DateUtils.dateDD();
+        mm = DateUtils.dateMM();
+        yy = DateUtils.dateYYYY();
+        data = DateUtils.dateDDMMYY();
         barbes_date.setText(data);
         plusDD = Integer.parseInt(dd);
-        barbesReadDb();
+        barbesReadDb(DateUtils.dateDDMMYY());
         ReadDb();
         initListeners();
-        findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet());
+//        findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet());
 
         findViewById(R.id.minus_date).setOnClickListener(v -> minusDate());
 
         findViewById(R.id.plus_date).setOnClickListener(v -> plusDate());
 
-//        customerReadDb();
     }
 
-    private void notification() {
+    private void initViews() {
+        barbes_date_text = findViewById(R.id.barbes_date_text);
+        progressBar = findViewById(R.id.progressBar);
+        backBtn = findViewById(R.id.back_Button);
+        user_id = findViewById(R.id.user_id);
+        recycler = findViewById(R.id.recycler);
+        barbes_date = findViewById(R.id.barbes_date);
 
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                    != PackageManager.PERMISSION_GRANTED) {
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
-                        101);
-            } else {
-                // Рухсат берилган, notification чиқариш мумкин
-                NotificationHelper.showNotification(this, "Салом!", "Бу сизга келган хабар.");
-            }
-        } else {
-            // Android 12 ёки қуйироқ — permission керак эмас
-            NotificationHelper.showNotification(this, "Салом!", "Бу сизга келган хабар.");
-        }
-
+        barbes_date_text.setText("Sartarosh: " + customerName);
+        user_id.setText("ID: " + barberUserID);
     }
-
-
 
     private void plusDate() {
         if (clickPlusCount <= 1) {
             clickPlusCount++;
             plusDD = Integer.parseInt(dd) + clickPlusCount;
-            String date = LocalDateTime.datePlusDays(clickPlusCount);
+            String date = DateUtils.datePlusDays(clickPlusCount);
             barbes_date.setText(date);
             Log.d("TAG5", "plusDate: " + plusDD);
-            ReadDb();
+            barbesReadDb(date);
         } else {
             Toast.makeText(this, "Keyingi sanaga o'tib bo'lmaydi", Toast.LENGTH_SHORT).show();
         }
@@ -171,16 +167,16 @@ public class CustomerActivity extends AppCompatActivity {
         if (clickPlusCount >= 1) {
             clickPlusCount--;
             plusDD = Integer.parseInt(dd) + clickPlusCount;
-            String date = LocalDateTime.datePlusDays(clickPlusCount);
+            String date = DateUtils.datePlusDays(clickPlusCount);
             barbes_date.setText(date);
             Log.d("TAG5", "minusDate: " + plusDD);
-            ReadDb();
+            barbesReadDb(date);
         } else {
             Toast.makeText(this, "Keyingi sanaga o'tib bo'lmaydi", Toast.LENGTH_SHORT).show();
         }
     }
 
-    public void barbesReadDb() {
+    public void barbesReadDb(String selectedDate) {
         db.collection("Barbers").document(barbershopId)
                 .get().addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
@@ -189,8 +185,36 @@ public class CustomerActivity extends AppCompatActivity {
                         Log.e("readDb", "Xatolik: 1 " + profile.getUserID());
                         hairTime = profile.getHairTime();
                         beardTime = profile.getBeardTime();
+                        String strictStartHour = profile.getStrictStartHour();
+                        String strictEndHour = profile.getStrictEndHour();
 
+                        boolean found = false;
+                        List<BarberMapModel> dateList = profile.getKey();
+                        if (dateList != null && !dateList.isEmpty()) {
+                            for (BarberMapModel entry : dateList) {
+                                if (entry.getDate().equals(selectedDate)) {
+                                    int startHour = Integer.parseInt(entry.getStartHour());
+                                    int endHour = Integer.parseInt(entry.getEndHour());
+
+                                    timeSlotView.setStartHour(startHour, endHour);
+                                    Log.d("TAG11", "Date: 2 " + selectedDate +
+                                            " Start: " + startHour +
+                                            " End: " + endHour);
+                                    findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet(String.format("%02d", startHour), String.format("%02d", endHour)));
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!found) {
+                            timeSlotView.setStartHour(Integer.parseInt(strictStartHour), Integer.parseInt(strictEndHour));
+                            findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet(String.format("%02d", strictStartHour), String.format("%02d", strictEndHour)));
+                            Log.d("TAG11", "Default strict hours qo‘llandi: " + strictStartHour + " - " + strictEndHour);
+                        }
+                        ReadDb();
                     }
+
                 }).addOnFailureListener(e -> {
                     Log.e("readDb", "Xatolik: " + e.getMessage());
                 });
@@ -212,7 +236,7 @@ public class CustomerActivity extends AppCompatActivity {
                             fcmToken = profile.getFcmToken();
 
                             Log.d("TAG6", "customerReadDb: 1");
-                            if(userID == null || fcmToken == null || customerId == null) {
+                            if (userID == null || fcmToken == null || customerId == null) {
                                 Intent intent = new Intent(this, LoginActivity.class);
                                 Log.d("TAG6", "customerReadDb: 2");
 
@@ -222,17 +246,239 @@ public class CustomerActivity extends AppCompatActivity {
                             } else {
                                 WriteDb(getName, getPhone1, getPhone2);
                             }
+
+
                         }
                     }
                 })
                 .addOnFailureListener(e -> Log.e("readDb", "Xatolik: " + e.getMessage()));
     }
 
-    private void showMaterialTimeBottomSheet() {
-//        notification();
+
+    private void WriteDb(String name, String phone1, String phone2) {
+        String hourStr = hours;
+        String minuteStr = min;
+
+        if (hourStr.isEmpty() || minuteStr.isEmpty()) return;
+
+        int hour = Integer.parseInt(hourStr);
+        int startMinute = Integer.parseInt(minuteStr);
+
+        if (startMinute >= 60) {
+            Toast.makeText(this, "Daqiqa noto‘g‘ri kiritilgan", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
 
-        // BottomSheetDialog яратиш
+        LocalDateTime now = LocalDateTime.now();
+        int currentHour = now.getHour();
+        int currentMinute = now.getMinute();
+
+        // Agar tanlangan sana bugungi kun bo‘lsa:
+        String selectedDate = barbes_date.getText().toString(); // dd.MM.yyyy форматда
+        String todayDate = DateUtils.dateDDMMYY();
+
+        if (selectedDate.equals(todayDate)) {
+            if (hour < currentHour || (hour == currentHour && startMinute <= currentMinute)) {
+                Toast.makeText(this, "O‘tgan vaqtga navbat olib bo‘lmaydi", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        int endMinute = startMinute + Integer.parseInt(hairTime);
+        int endHour = hour + (endMinute >= 60 ? 1 : 0);
+        endMinute = endMinute % 60;
+
+        String slot = String.format("%02d:%02d-%02d:%02d", hour, startMinute, endHour, endMinute);
+
+        Map<String, Object> item = new HashMap<>();
+        item.put("slot", slot);
+        item.put("barberUserID", barberUserID);
+        item.put("customerUid", customerId);
+        item.put("customerUserID", userID);
+        item.put("name", name);
+        item.put("phone1", phone1);
+        item.put("phone2", phone2);
+        item.put("data", data);
+        String stringPlusDD = String.format("%02d", plusDD);
+        item.put("day-time", stringPlusDD);
+
+        Log.d("TAG12", "WriteDb: 3 " + data + " " + customerId + " " + stringPlusDD);
+
+        db.collection("Barbers").document(barbershopId).collection("Customer1")
+                .whereEqualTo("customerUid", customerId)
+                .whereEqualTo("day-time", stringPlusDD)   // faqat tanlangan sana bo'yicha
+                .get()
+                .addOnSuccessListener(query -> {
+                    if (!query.isEmpty()) {
+
+                        Log.d("TAG12", "WriteDb: 1 " + data + " " + customerId);
+                        // Allaqachon buyurtma qilingan
+                        Toast.makeText(this, "Siz bir kunda faqat bitta navbat olishingiz mumkin", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Log.d("TAG12", "WriteDb: 2 " + data + " " + customerId);
+                        // 🚀 endi yozish mumkin
+                        db.collection("Barbers").document(barbershopId).collection("Customer1")
+                                .add(item)
+                                .addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId()))
+                                .addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
+
+                        activityList.clear();
+                        ReadDb();
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("TAG", "Xatolik: " + e.getMessage()));
+
+    }
+
+
+    public void ReadDb() {
+        progressBar.setVisibility(View.VISIBLE);
+
+        String stringPlusDD = String.format("%02d", plusDD);
+
+        if (!barbershopId.isEmpty()) {
+            db.collection("Barbers").document(barbershopId).collection("Customer1")
+                    .whereGreaterThanOrEqualTo("day-time", stringPlusDD)
+                    .whereLessThanOrEqualTo("day-time", stringPlusDD + "\uf8ff")
+                    .get()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful() && task.getResult() != null) {
+                            List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
+                            activityList.clear();
+
+                            for (QueryDocumentSnapshot doc : task.getResult()) {
+                                String slot = doc.getString("slot");
+                                String name = doc.getString("name");
+                                String phone1 = doc.getString("phone1");
+                                String customerUserID = doc.getString("customerUserID");
+                                if (slot == null || !slot.contains("-")) continue;
+
+                                activityList.add(new TimeModel(barbershopId, customerId, doc.getId(), slot, name, phone1, customerUserID));
+
+                                try {
+                                    String[] parts = slot.split("-");
+                                    LocalTime start = LocalTime.parse(parts[0].trim());
+                                    LocalTime end = LocalTime.parse(parts[1].trim());
+                                    timeSlots.add(new TimeSlotView.TimeSlot(start, end));
+                                } catch (Exception e) {
+                                    Log.w("ParseError", "Slot parsing failed: " + slot);
+                                }
+                            }
+
+                            timeSlotView.setBusySlots(timeSlots);
+                            recycler.setLayoutManager(new GridLayoutManager(this, 1));
+                            adapter = new CustomerAdapter(this, activityList);
+                            recycler.setAdapter(adapter);
+                            progressBar.setVisibility(View.GONE);
+                        } else {
+                            Log.e("Firestore", "Failed to read slots", task.getException());
+                        }
+                    });
+        } else {
+            Log.e("ReadDb", "Barber ID is empty");
+        }
+    }
+
+
+    public static class TimeSlotView extends View {
+        private List<TimeSlotView.TimeSlot> busy = new ArrayList<>();
+        private int startHour = 7;   // default qiymat
+        private int endHour = 23;
+
+        private final Paint slotPaint = new Paint();
+        private final Paint labelPaint = new Paint();
+        private final Paint linePaint = new Paint();
+        private final Paint bgPaint = new Paint();
+
+        public TimeSlotView(Context context) {
+            this(context, null);
+        }
+
+        public TimeSlotView(Context context, AttributeSet attrs) {
+            this(context, attrs, 0);
+        }
+
+        public TimeSlotView(Context context, AttributeSet attrs, int defStyleAttr) {
+            super(context, attrs, defStyleAttr);
+
+            // vaqt belgilari
+            labelPaint.setColor(Color.parseColor("#37474F"));
+            labelPaint.setTextSize(32f);
+            labelPaint.setAntiAlias(true);
+
+            // soat liniyalari
+            linePaint.setColor(Color.LTGRAY);
+            linePaint.setStrokeWidth(2f);
+
+            // slot uchun effekt
+            slotPaint.setAntiAlias(true);
+            slotPaint.setShadowLayer(6f, 0, 2, Color.GRAY);
+            setLayerType(LAYER_TYPE_SOFTWARE, slotPaint);
+
+            // fon gradyenti
+            Shader shader = new LinearGradient(
+                    0, 0, 0, getHeight(),
+                    Color.parseColor("#FFFFFF"),
+                    Color.parseColor("#E0F7FA"),
+                    Shader.TileMode.CLAMP
+            );
+            bgPaint.setShader(shader);
+        }
+
+        public void setBusySlots(List<TimeSlotView.TimeSlot> list) {
+            this.busy = list;
+            invalidate(); // qayta chiz
+        }
+
+        public void setStartHour(int startHour, int endHour) {
+            this.startHour = startHour;
+            this.endHour = endHour;
+            invalidate(); // qayta chiz
+        }
+
+        @Override
+        protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+
+            int totalMin = (endHour - startHour) * 60;
+            if (totalMin <= 0) return;
+
+            float slotH = (float) getHeight() / totalMin;
+
+            // fon
+            canvas.drawRect(0, 0, getWidth(), getHeight(), bgPaint);
+
+            // busy slotlarni chizamiz
+            slotPaint.setColor(Color.parseColor("#FFAB91"));
+            for (TimeSlotView.TimeSlot slot : busy) {
+                float top = Duration.between(LocalTime.of(startHour, 0), slot.start).toMinutes() * slotH;
+                float bottom = Duration.between(LocalTime.of(startHour, 0), slot.end).toMinutes() * slotH;
+                canvas.drawRoundRect(0, top, getWidth(), bottom, 24f, 24f, slotPaint);
+            }
+
+            // soat liniyalari va vaqt yozuvlari
+            for (int h = startHour; h <= endHour; h++) {
+                float y = (h - startHour) * 60 * slotH;
+                canvas.drawLine(0, y, getWidth(), y, linePaint);
+                canvas.drawText(String.format("%02d:00", h), 20, y + 30, labelPaint);
+            }
+        }
+
+        // 🔹 model
+        public static class TimeSlot {
+            LocalTime start, end;
+
+            public TimeSlot(LocalTime s, LocalTime e) {
+                start = s;
+                end = e;
+            }
+        }
+    }
+
+
+    private void showMaterialTimeBottomSheet(String startHour, String endHour) {
+
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
         View bottomSheetView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_time_picker, null, false);
         bottomSheetDialog.setContentView(bottomSheetView);
@@ -243,15 +489,24 @@ public class CustomerActivity extends AppCompatActivity {
 
 
         if (spinner_hours != null) {
+            int start = Integer.parseInt(startHour);
+            int end = Integer.parseInt(endHour) - 1;
+
+            List<String> hoursList = new ArrayList<>();
+            for (int i = start; i <= end; i++) {
+                hoursList.add(String.format("%02d", i)); // 08, 09, 10 ... 19
+            }
 
             String[] spinner_hours_list = {"08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"};
-            SpinnerAdapter adapter_hours = new SpinnerAdapter(this, Arrays.asList(spinner_hours_list), R.layout.spinner);
+            SpinnerAdapter adapter_hours = new SpinnerAdapter(this, hoursList, R.layout.spinner);
             spinner_hours.setAdapter(adapter_hours);
             spinner_hours.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                     String selectedOption = parentView.getItemAtPosition(position).toString();
                     hours = selectedOption;
+
+
                 }
 
                 @Override
@@ -262,7 +517,6 @@ public class CustomerActivity extends AppCompatActivity {
         }
         if (spinner_min != null) {
 
-            // SpinnerAdapter тайинлаш
             String[] spinner_young_list = {"00", "10", "20", "30", "40", "50"};
             SpinnerAdapter adapter_young = new SpinnerAdapter(this, Arrays.asList(spinner_young_list), R.layout.spinner);
             spinner_min.setAdapter(adapter_young);
@@ -277,7 +531,6 @@ public class CustomerActivity extends AppCompatActivity {
                 public void onNothingSelected(AdapterView<?> parentView) {
                 }
             });
-        } else {
         }
 
         // OK тугма
@@ -292,25 +545,6 @@ public class CustomerActivity extends AppCompatActivity {
         bottomSheetDialog.show();
     }
 
-
-    private void initViews() {
-        barbes_date_text = findViewById(R.id.barbes_date_text);
-        progressBar = findViewById(R.id.progressBar);
-        backBtn = findViewById(R.id.back_Button);
-        user_id = findViewById(R.id.user_id);
-        recycler = findViewById(R.id.recycler);
-        barbes_date = findViewById(R.id.barbes_date);
-
-
-        toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        barbes_date_text.setText("Sartarosh: " + customerName);
-//        date_text.setText("Bugun: " + LocalDateTime.dateDDMMYY());
-        user_id.setText("ID: " + barberUserID);
-
-
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -355,186 +589,6 @@ public class CustomerActivity extends AppCompatActivity {
         });
 
     }
-
-    private void WriteDb(String name, String phone1, String phone2) {
-
-        String hourStr = hours.toString();
-        String minuteStr = min.toString();
-
-        if (hourStr.isEmpty() || minuteStr.isEmpty()) return;
-
-        int hour = Integer.parseInt(hourStr);
-        int startMinute = Integer.parseInt(minuteStr);
-
-        if (startMinute >= 60) {
-            Toast.makeText(this, "Daqiqa noto‘g‘ri kiritilgan", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        int endMinute = Integer.parseInt(startMinute + hairTime);
-        int endHour = hour + (endMinute >= 60 ? 1 : 0);
-        endMinute = endMinute % 60;
-
-        String slot = String.format("%02d:%02d-%02d:%02d", hour, startMinute, endHour, endMinute);
-
-        Map<String, Object> item = new HashMap<>();
-        item.put("slot", slot);
-        item.put("barberUserID", barberUserID);
-        item.put("customerUid", customerId);
-        item.put("customerUserID", userID);
-        item.put("name", name);
-        item.put("phone1", phone1);
-        item.put("phone2", phone2);
-        item.put("data", data);
-        String stringPlusDD = String.format("%02d", plusDD);
-        item.put("day-time", stringPlusDD);
-
-        db.collection("Barbers").document(barbershopId).collection("Customer1")
-                .add(item)
-                .addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId()))
-                .addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
-        activityList.clear();
-        ReadDb();
-    }
-
-    public void ReadDb() {
-        progressBar.setVisibility(View.VISIBLE);
-        Log.d("TAG5", "ReadDb: " + plusDD);
-        String stringPlusDD = String.format("%02d", plusDD);
-        Log.d("TAG5", "ReadDb stringPlusDD: " + stringPlusDD);
-        if (!barbershopId.isEmpty()) {
-            db.collection("Barbers").document(barbershopId).collection("Customer1")
-                    .whereGreaterThanOrEqualTo("day-time", stringPlusDD)
-                    .whereLessThanOrEqualTo("day-time", stringPlusDD + "\uf8ff")
-                    .get()
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful() && task.getResult() != null) {
-                            List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
-                            activityList.clear();
-
-                            for (QueryDocumentSnapshot doc : task.getResult()) {
-                                String slot = doc.getString("slot");
-                                String name = doc.getString("name");
-                                String phone1 = doc.getString("phone1");
-                                String customerUserID = doc.getString("customerUserID");
-                                if (slot == null || !slot.contains("-")) continue;
-
-                                activityList.add(new TimeModel(barbershopId, customerId, doc.getId(), slot, name, phone1, customerUserID));
-
-                                try {
-                                    String[] parts = slot.split("-");
-                                    LocalTime start = LocalTime.parse(parts[0].trim());
-                                    LocalTime end = LocalTime.parse(parts[1].trim());
-                                    timeSlots.add(new TimeSlotView.TimeSlot(start, end));
-                                } catch (Exception e) {
-                                    Log.w("ParseError", "Slot parsing failed: " + slot);
-                                }
-                            }
-
-                            timeSlotView.setBusySlots(timeSlots);
-                            recycler.setLayoutManager(new GridLayoutManager(this, 1));
-                            adapter = new CustomerAdapter(this, activityList);
-                            recycler.setAdapter(adapter);
-                            progressBar.setVisibility(View.GONE);
-                        } else {
-                            Log.e("Firestore", "Failed to read slots", task.getException());
-                        }
-                    });
-        } else {
-            Log.e("ReadDb", "Barber ID is empty");
-        }
-    }
-
-    // Ichki klass — vaqtни кўрсатувчи view
-    public static class TimeSlotView extends View {
-        private List<TimeSlot> busy = new ArrayList<>();
-        private final int startHour = 8, endHour = 20, totalMin = (endHour - startHour) * 60;
-
-        private final Paint slotPaint = new Paint();
-        private final Paint labelPaint = new Paint();
-        private final Paint linePaint = new Paint();
-        private final Paint bgPaint = new Paint();
-
-        public TimeSlotView(Context context) {
-            this(context, null);
-        }
-
-        public TimeSlotView(Context context, AttributeSet attrs) {
-            this(context, attrs, 0);
-        }
-
-        public TimeSlotView(Context context, AttributeSet attrs, int defStyleAttr) {
-            super(context, attrs, defStyleAttr);
-
-            // Вақт белгиси шрифт
-            labelPaint.setColor(Color.parseColor("#37474F"));
-            labelPaint.setTextSize(32f);
-            labelPaint.setAntiAlias(true);
-
-            // Ҳар бир соат чизиғи
-            linePaint.setColor(Color.LTGRAY);
-            linePaint.setStrokeWidth(2f);
-
-            // Shadow
-            slotPaint.setAntiAlias(true);
-            slotPaint.setShadowLayer(6f, 0, 2, Color.GRAY);
-            setLayerType(LAYER_TYPE_SOFTWARE, slotPaint);
-
-            // Фон учун градиент
-            Shader shader = new LinearGradient(
-                    0, 0, 0, getHeight(),
-                    Color.parseColor("#FFFFFF"),
-                    Color.parseColor("#E0F7FA"),
-                    Shader.TileMode.CLAMP
-            );
-            bgPaint.setShader(shader);
-        }
-
-        public void setBusySlots(List<TimeSlot> list) {
-            busy = list;
-            invalidate();
-        }
-
-        @Override
-        protected void onDraw(Canvas canvas) {
-            super.onDraw(canvas);
-
-            float slotH = (float) getHeight() / totalMin;
-
-            //  Фон градиенти
-            canvas.drawRect(0, 0, getWidth(), getHeight(), bgPaint);
-
-            //  Фақат банд вақтларни чизмага чиқарамиз
-            slotPaint.setColor(Color.parseColor("#FFAB91")); // Pastel Orange
-
-            for (TimeSlot slot : busy) {
-                float top = Duration.between(LocalTime.of(startHour, 0), slot.start).toMinutes() * slotH;
-                float bottom = Duration.between(LocalTime.of(startHour, 0), slot.end).toMinutes() * slotH;
-                canvas.drawRoundRect(0, top, getWidth(), bottom, 24f, 24f, slotPaint);
-            }
-
-            //  Ҳар бир соат учун йўналиш чизиқлари ва вақтлар
-            for (int h = startHour; h <= endHour; h++) {
-                float y = (h - startHour) * 60 * slotH;
-                canvas.drawLine(0, y, getWidth(), y, linePaint);
-                canvas.drawText(String.format("%02d:00", h), 20, y + 30, labelPaint);
-            }
-        }
-
-        public static class TimeSlot {
-            LocalTime start, end;
-
-            public TimeSlot(LocalTime s, LocalTime e) {
-                start = s;
-                end = e;
-            }
-        }
-    }
-
-
-
-
-
 
 
     private void checkNotificationPermission() {
@@ -589,8 +643,6 @@ public class CustomerActivity extends AppCompatActivity {
             }
         }
     }
-
-
 
 
 }

@@ -40,7 +40,8 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bc.sartarosh.LocalDateTime;
+import com.bc.sartarosh.DateUtils;
+//import com.bc.sartarosh.LocalDateTime;
 import com.bc.sartarosh.MainActivity;
 import com.bc.sartarosh.NotificationHelper;
 import com.bc.sartarosh.R;
@@ -56,6 +57,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.Source;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -100,7 +102,7 @@ public class BarberActivity extends AppCompatActivity {
 
 //        readDb();
 
-        barbesReadDb(LocalDateTime.dateDDMMYY());
+        barbesReadDb(DateUtils.dateDDMMYY());
 
     }
 
@@ -109,7 +111,7 @@ public class BarberActivity extends AppCompatActivity {
         if (clickPlusCount <= 1) {
             clickPlusCount++;
             plusDD = Integer.parseInt(dd) + clickPlusCount;
-            String date = LocalDateTime.datePlusDays(clickPlusCount);
+            String date = DateUtils.datePlusDays(clickPlusCount);
             barbes_date.setText(date);
             Log.d("TAG5", "plusDate: " + date);
 
@@ -124,7 +126,7 @@ public class BarberActivity extends AppCompatActivity {
         if (clickPlusCount >= 1) {
             clickPlusCount--;
             plusDD = Integer.parseInt(dd) + clickPlusCount;
-            String date = LocalDateTime.datePlusDays(clickPlusCount);
+            String date = DateUtils.datePlusDays(clickPlusCount);
             barbes_date.setText(date);
             Log.d("TAG5", "minusDate: " + plusDD);
 
@@ -149,10 +151,10 @@ public class BarberActivity extends AppCompatActivity {
 
         findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet());
 
-        dd = LocalDateTime.dateDD();
-        mm = LocalDateTime.dateMM();
-        yy = LocalDateTime.dateYYYY();
-        data = LocalDateTime.dateDDMMYY();
+        dd = DateUtils.dateDD();
+        mm = DateUtils.dateMM();
+        yy = DateUtils.dateYYYY();
+        data = DateUtils.dateDDMMYY();
 
         barbes_date.setText(data);
         plusDD = Integer.parseInt(dd);
@@ -165,7 +167,7 @@ public class BarberActivity extends AppCompatActivity {
 
     public void barbesReadDb(String selectedDate) {
         db.collection("Barbers").document(barbershopId)
-                .get(Source.SERVER)
+                .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (!documentSnapshot.exists()) return;
 
@@ -391,6 +393,25 @@ public class BarberActivity extends AppCompatActivity {
             Toast.makeText(this, "Daqiqa noto‘g‘ri kiritilgan", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        // ⏰ Hozirgi vaqt
+        LocalDateTime now = LocalDateTime.now();
+        int currentHour = now.getHour();
+        int currentMinute = now.getMinute();
+
+        // Agar tanlangan sana bugungi kun bo‘lsa:
+        String selectedDate = barbes_date.getText().toString(); // dd.MM.yyyy форматда
+        String todayDate = DateUtils.dateDDMMYY();
+
+        if (selectedDate.equals(todayDate)) {
+            if (hour < currentHour || (hour == currentHour && minute <= currentMinute)) {
+                Toast.makeText(this, "O‘tgan vaqtga navbat olib bo‘lmaydi", Toast.LENGTH_SHORT).show();
+                return; // yozmaymiz
+            }
+        }
+
+
+
         Log.d("hairTime", "Xatolik: 2 " + hairTime);
         int endMinute = Integer.parseInt(minute + hairTime);
         int endHour = hour + (endMinute >= 60 ? 1 : 0);

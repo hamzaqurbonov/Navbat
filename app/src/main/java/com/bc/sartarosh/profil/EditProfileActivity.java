@@ -12,7 +12,8 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.bc.sartarosh.LocalDateTime;
+//import com.bc.sartarosh.LocalDateTime;
+import com.bc.sartarosh.DateUtils;
 import com.bc.sartarosh.PhoneFormatter;
 import com.bc.sartarosh.R;
 import com.bc.sartarosh.SharedPreferencesUtil;
@@ -125,9 +126,9 @@ public class EditProfileActivity extends AppCompatActivity {
     }
 
     private void dataSet() {
-        edit_date_1.setText(LocalDateTime.dateDDMMYY());
-        edit_date_2.setText(LocalDateTime.datePlusDays(1));
-        edit_date_3.setText(LocalDateTime.datePlusDays(2));
+        edit_date_1.setText(DateUtils.dateDDMMYY());
+        edit_date_2.setText(DateUtils.datePlusDays(1));
+        edit_date_3.setText(DateUtils.datePlusDays(2));
     }
 
     private void readDb() {
@@ -167,11 +168,11 @@ public class EditProfileActivity extends AppCompatActivity {
                         String startHour = entry.getStartHour();
                         String endHour = entry.getEndHour();
 
-                        if (date.equals(LocalDateTime.dateDDMMYY())) {
+                        if (date.equals(DateUtils.dateDDMMYY())) {
                             setDateHours(edit_dateStartHour_1, edit_dateEndHour_1, startHour, endHour);
-                        } else if (date.equals(LocalDateTime.datePlusDays(1))) {
+                        } else if (date.equals(DateUtils.datePlusDays(1))) {
                             setDateHours(edit_dateStartHour_2, edit_dateEndHour_2, startHour, endHour);
-                        } else if (date.equals(LocalDateTime.datePlusDays(2))) {
+                        } else if (date.equals(DateUtils.datePlusDays(2))) {
                             setDateHours(edit_dateStartHour_3, edit_dateEndHour_3, startHour, endHour);
                         }
                     }
@@ -204,15 +205,15 @@ public class EditProfileActivity extends AppCompatActivity {
             profile.put("strictEndHour", edit_strictEndHour.getText().toString());
 
             // arrayUnion учун nested object тайёрлаш
-            Map<String, Object> nestedData1 = createNestedDate(LocalDateTime.dateDDMMYY(),
+            Map<String, Object> nestedData1 = createNestedDate(DateUtils.dateDDMMYY(),
                     edit_dateStartHour_1.getText().toString(),
                     edit_dateEndHour_1.getText().toString());
 
-            Map<String, Object> nestedData2 = createNestedDate(LocalDateTime.datePlusDays(1),
+            Map<String, Object> nestedData2 = createNestedDate(DateUtils.datePlusDays(1),
                     edit_dateStartHour_2.getText().toString(),
                     edit_dateEndHour_2.getText().toString());
 
-            Map<String, Object> nestedData3 = createNestedDate(LocalDateTime.datePlusDays(2),
+            Map<String, Object> nestedData3 = createNestedDate(DateUtils.datePlusDays(2),
                     edit_dateStartHour_3.getText().toString(),
                     edit_dateEndHour_3.getText().toString());
 
