@@ -68,7 +68,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -91,7 +93,7 @@ public class CustomerActivity extends AppCompatActivity {
     String getName, getPhone1, getPhone2, userID, fcmToken, hairTime, beardTime;
     int clickPlusCount = 0, plusDD;
     ProgressBar progressBar;
-
+    private List<TimeSlotView.TimeSlot> busySlots = new ArrayList<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -200,7 +202,7 @@ public class CustomerActivity extends AppCompatActivity {
                                     Log.d("TAG11", "Date: 2 " + selectedDate +
                                             " Start: " + startHour +
                                             " End: " + endHour);
-                                    findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet(String.format("%02d", startHour), String.format("%02d", endHour)));
+                                    findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet(String.format("%02d", startHour), String.format("%02d", endHour) ));
                                     found = true;
                                     break;
                                 }
@@ -209,7 +211,7 @@ public class CustomerActivity extends AppCompatActivity {
 
                         if (!found) {
                             timeSlotView.setStartHour(Integer.parseInt(strictStartHour), Integer.parseInt(strictEndHour));
-                            findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet(String.format("%02d", strictStartHour), String.format("%02d", strictEndHour)));
+                            findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet(strictStartHour, strictEndHour));
                             Log.d("TAG11", "Default strict hours qo‘llandi: " + strictStartHour + " - " + strictEndHour);
                         }
                         ReadDb();
@@ -310,14 +312,10 @@ public class CustomerActivity extends AppCompatActivity {
                 .whereEqualTo("day-time", stringPlusDD)   // faqat tanlangan sana bo'yicha
                 .get()
                 .addOnSuccessListener(query -> {
-                    if (!query.isEmpty()) {
+//                    if (!query.isEmpty()) {
+//                        Toast.makeText(this, "Siz bir kunda faqat bitta navbat olishingiz mumkin", Toast.LENGTH_SHORT).show();
+//                    } else {
 
-                        Log.d("TAG12", "WriteDb: 1 " + data + " " + customerId);
-                        // Allaqachon buyurtma qilingan
-                        Toast.makeText(this, "Siz bir kunda faqat bitta navbat olishingiz mumkin", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Log.d("TAG12", "WriteDb: 2 " + data + " " + customerId);
-                        // 🚀 endi yozish mumkin
                         db.collection("Barbers").document(barbershopId).collection("Customer1")
                                 .add(item)
                                 .addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId()))
@@ -325,60 +323,62 @@ public class CustomerActivity extends AppCompatActivity {
 
                         activityList.clear();
                         ReadDb();
-                    }
+//                    }
                 })
                 .addOnFailureListener(e -> Log.e("TAG", "Xatolik: " + e.getMessage()));
 
     }
 
+public void ReadDb() {
+    progressBar.setVisibility(View.VISIBLE);
 
-    public void ReadDb() {
-        progressBar.setVisibility(View.VISIBLE);
+    String stringPlusDD = String.format("%02d", plusDD);
 
-        String stringPlusDD = String.format("%02d", plusDD);
+    if (!barbershopId.isEmpty()) {
+        db.collection("Barbers").document(barbershopId).collection("Customer1")
+                .whereGreaterThanOrEqualTo("day-time", stringPlusDD)
+                .whereLessThanOrEqualTo("day-time", stringPlusDD + "\uf8ff")
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
+                        activityList.clear();
 
-        if (!barbershopId.isEmpty()) {
-            db.collection("Barbers").document(barbershopId).collection("Customer1")
-                    .whereGreaterThanOrEqualTo("day-time", stringPlusDD)
-                    .whereLessThanOrEqualTo("day-time", stringPlusDD + "\uf8ff")
-                    .get()
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful() && task.getResult() != null) {
-                            List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
-                            activityList.clear();
+                        for (QueryDocumentSnapshot doc : task.getResult()) {
+                            String slot = doc.getString("slot");
+                            String name = doc.getString("name");
+                            String phone1 = doc.getString("phone1");
+                            String customerUserID = doc.getString("customerUserID");
+                            if (slot == null || !slot.contains("-")) continue;
 
-                            for (QueryDocumentSnapshot doc : task.getResult()) {
-                                String slot = doc.getString("slot");
-                                String name = doc.getString("name");
-                                String phone1 = doc.getString("phone1");
-                                String customerUserID = doc.getString("customerUserID");
-                                if (slot == null || !slot.contains("-")) continue;
+                            activityList.add(new TimeModel(barbershopId, customerId, doc.getId(), slot, name, phone1, customerUserID));
 
-                                activityList.add(new TimeModel(barbershopId, customerId, doc.getId(), slot, name, phone1, customerUserID));
-
-                                try {
-                                    String[] parts = slot.split("-");
-                                    LocalTime start = LocalTime.parse(parts[0].trim());
-                                    LocalTime end = LocalTime.parse(parts[1].trim());
-                                    timeSlots.add(new TimeSlotView.TimeSlot(start, end));
-                                } catch (Exception e) {
-                                    Log.w("ParseError", "Slot parsing failed: " + slot);
-                                }
+                            try {
+                                String[] parts = slot.split("-");
+                                LocalTime start = LocalTime.parse(parts[0].trim());
+                                LocalTime end = LocalTime.parse(parts[1].trim());
+                                timeSlots.add(new TimeSlotView.TimeSlot(start, end));
+                            } catch (Exception e) {
+                                Log.w("ParseError", "Slot parsing failed: " + slot);
                             }
-
-                            timeSlotView.setBusySlots(timeSlots);
-                            recycler.setLayoutManager(new GridLayoutManager(this, 1));
-                            adapter = new CustomerAdapter(this, activityList);
-                            recycler.setAdapter(adapter);
-                            progressBar.setVisibility(View.GONE);
-                        } else {
-                            Log.e("Firestore", "Failed to read slots", task.getException());
                         }
-                    });
-        } else {
-            Log.e("ReadDb", "Barber ID is empty");
-        }
+
+                        // busySlots globalda saqlanadi
+                        busySlots = timeSlots;
+
+                        timeSlotView.setBusySlots(timeSlots);
+                        recycler.setLayoutManager(new GridLayoutManager(this, 1));
+                        adapter = new CustomerAdapter(this, activityList);
+                        recycler.setAdapter(adapter);
+                        progressBar.setVisibility(View.GONE);
+                    } else {
+                        Log.e("Firestore", "Failed to read slots", task.getException());
+                    }
+                });
+    } else {
+        Log.e("ReadDb", "Barber ID is empty");
     }
+}
 
 
     public static class TimeSlotView extends View {
@@ -467,13 +467,23 @@ public class CustomerActivity extends AppCompatActivity {
 
         // 🔹 model
         public static class TimeSlot {
-            LocalTime start, end;
+            private LocalTime start;
+            private LocalTime end;
 
-            public TimeSlot(LocalTime s, LocalTime e) {
-                start = s;
-                end = e;
+            public TimeSlot(LocalTime start, LocalTime end) {
+                this.start = start;
+                this.end = end;
+            }
+
+            public LocalTime getStart() {
+                return start;
+            }
+
+            public LocalTime getEnd() {
+                return end;
             }
         }
+
     }
 
 
@@ -505,7 +515,7 @@ public class CustomerActivity extends AppCompatActivity {
                 public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                     String selectedOption = parentView.getItemAtPosition(position).toString();
                     hours = selectedOption;
-
+                    updateMinutesSpinner();
 
                 }
 
@@ -515,25 +525,8 @@ public class CustomerActivity extends AppCompatActivity {
             });
 
         }
-        if (spinner_min != null) {
 
-            String[] spinner_young_list = {"00", "10", "20", "30", "40", "50"};
-            SpinnerAdapter adapter_young = new SpinnerAdapter(this, Arrays.asList(spinner_young_list), R.layout.spinner);
-            spinner_min.setAdapter(adapter_young);
-            spinner_min.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                    String selectedOption = parentView.getItemAtPosition(position).toString();
-                    min = selectedOption;
-                }
 
-                @Override
-                public void onNothingSelected(AdapterView<?> parentView) {
-                }
-            });
-        }
-
-        // OK тугма
         Button okButton = bottomSheetView.findViewById(R.id.btn_ok);
         if (okButton != null) {
             okButton.setOnClickListener(v -> {
@@ -544,6 +537,114 @@ public class CustomerActivity extends AppCompatActivity {
 
         bottomSheetDialog.show();
     }
+
+
+
+//    private void updateMinutesSpinner() {
+//        if (spinner_min == null || hours == null || hours.isEmpty()) return;
+//
+//        // xizmat davomiyligi (daqiqada) — hairTime string bo'lsa, xavfsiz parse
+//        int serviceMin;
+//        try {
+//            serviceMin = Integer.parseInt(hairTime);
+//            Log.d("TAG13", "hairTime: 1 " + hairTime);
+//        } catch (Exception e) {
+//            serviceMin = 0; // noodatiy holatda hech narsa filtrlab yubormasin
+//            Log.d("TAG13", "serviceMin: 2 " + serviceMin);
+//        }
+//
+//        int selectedHour = Integer.parseInt(hours);
+//        String[] allMinutes = {"00", "10", "20", "30", "40", "50"};
+//        List<String> allowed = new ArrayList<>();
+//
+//        Log.d("TAG13", "allowed: 3 " + allowed);
+//
+//        for (String m : allMinutes) {
+//            int minInt = Integer.parseInt(m);
+//            LocalTime candidateStart = LocalTime.of(selectedHour, minInt);
+//            LocalTime candidateEnd   = candidateStart.plusMinutes(serviceMin > 0 ? serviceMin : 10);
+//
+//            Log.d("TAG13", "candidateStart: 4 " + candidateStart + " " + candidateEnd);
+//
+//            boolean ok = true;
+//
+//            if (busySlots != null && !busySlots.isEmpty()) {
+//                for (TimeSlotView.TimeSlot s : busySlots) {
+//                    LocalTime sStart = s.getStart();
+//                    LocalTime sEnd   = s.getEnd();
+//
+//                    Log.d("TAG13", "TimeSlotView.TimeSlot: 5 " + sStart + " " + sEnd);
+//                    // 1) Hech qanday kesishuv bo'lmasin: [start, end) ∩ [sStart, sEnd) = ∅
+//                    boolean overlaps = candidateStart.isBefore(sEnd) && candidateEnd.isAfter(sStart);
+//                    if (overlaps) { ok = false; break; }
+//
+//                    // 2) Har bir slotdan keyin "serviceMin" bufer:
+//                    // start = sEnd bo'lsa ruxsat (08:40 qoladi), lekin (sEnd, sEnd+serviceMin) oralig'ida taqiqlanadi.
+//                    if (serviceMin > 0 && candidateStart.isAfter(sEnd) &&
+//                            candidateStart.isBefore(sEnd.plusMinutes(serviceMin))) {
+//                        Log.d("TAG13", " 6 " + candidateStart);
+//                        ok = false; break;
+//                    }
+//                }
+//            }
+//
+//            if (ok) {
+//                allowed.add(m);
+//                Log.d("TAG13", " 6 " + allowed);
+//            }
+//        }
+//        // Agar hammasi o'chib ketsa ham spinner ishlashi uchun fallback qoldirmaymiz:
+//        // allowed bo'sh qolsa, foydalanuvchi boshqa soatni tanlaydi.
+//        SpinnerAdapter adapter_young = new SpinnerAdapter(this, allowed, R.layout.spinner);
+//        spinner_min.setAdapter(adapter_young);
+//        spinner_min.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//            @Override
+//            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+//                min = parentView.getItemAtPosition(position).toString();
+//            }
+//
+//            @Override
+//            public void onNothingSelected(AdapterView<?> parentView) {}
+//        });
+//    }
+
+
+
+
+
+    private void updateMinutesSpinner() {
+        if (spinner_min == null || hours == null) return;
+
+        List<String> minutesList = new ArrayList<>(Arrays.asList("00", "10", "20", "30", "40", "50"));
+
+        if (busySlots != null && !busySlots.isEmpty()) {
+            Iterator<String> iterator = minutesList.iterator();
+            while (iterator.hasNext()) {
+                String m = iterator.next();
+                LocalTime candidate = LocalTime.of(Integer.parseInt(hours), Integer.parseInt(m));
+
+                for (TimeSlotView.TimeSlot slot : busySlots) {
+                    if (!candidate.isBefore(slot.getStart()) && candidate.isBefore(slot.getEnd())) {
+                        iterator.remove(); // 🔥 бу вақт олиб ташланади
+                        break;
+                    }
+                }
+            }
+        }
+
+        SpinnerAdapter adapter_young = new SpinnerAdapter(this, minutesList, R.layout.spinner);
+        spinner_min.setAdapter(adapter_young);
+        spinner_min.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                min = parentView.getItemAtPosition(position).toString();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parentView) {}
+        });
+    }
+
 
 
     @Override
