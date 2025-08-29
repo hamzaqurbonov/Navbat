@@ -540,99 +540,56 @@ public void ReadDb() {
 
 
 
-//    private void updateMinutesSpinner() {
-//        if (spinner_min == null || hours == null || hours.isEmpty()) return;
-//
-//        // xizmat davomiyligi (daqiqada) — hairTime string bo'lsa, xavfsiz parse
-//        int serviceMin;
-//        try {
-//            serviceMin = Integer.parseInt(hairTime);
-//            Log.d("TAG13", "hairTime: 1 " + hairTime);
-//        } catch (Exception e) {
-//            serviceMin = 0; // noodatiy holatda hech narsa filtrlab yubormasin
-//            Log.d("TAG13", "serviceMin: 2 " + serviceMin);
-//        }
-//
-//        int selectedHour = Integer.parseInt(hours);
-//        String[] allMinutes = {"00", "10", "20", "30", "40", "50"};
-//        List<String> allowed = new ArrayList<>();
-//
-//        Log.d("TAG13", "allowed: 3 " + allowed);
-//
-//        for (String m : allMinutes) {
-//            int minInt = Integer.parseInt(m);
-//            LocalTime candidateStart = LocalTime.of(selectedHour, minInt);
-//            LocalTime candidateEnd   = candidateStart.plusMinutes(serviceMin > 0 ? serviceMin : 10);
-//
-//            Log.d("TAG13", "candidateStart: 4 " + candidateStart + " " + candidateEnd);
-//
-//            boolean ok = true;
-//
-//            if (busySlots != null && !busySlots.isEmpty()) {
-//                for (TimeSlotView.TimeSlot s : busySlots) {
-//                    LocalTime sStart = s.getStart();
-//                    LocalTime sEnd   = s.getEnd();
-//
-//                    Log.d("TAG13", "TimeSlotView.TimeSlot: 5 " + sStart + " " + sEnd);
-//                    // 1) Hech qanday kesishuv bo'lmasin: [start, end) ∩ [sStart, sEnd) = ∅
-//                    boolean overlaps = candidateStart.isBefore(sEnd) && candidateEnd.isAfter(sStart);
-//                    if (overlaps) { ok = false; break; }
-//
-//                    // 2) Har bir slotdan keyin "serviceMin" bufer:
-//                    // start = sEnd bo'lsa ruxsat (08:40 qoladi), lekin (sEnd, sEnd+serviceMin) oralig'ida taqiqlanadi.
-//                    if (serviceMin > 0 && candidateStart.isAfter(sEnd) &&
-//                            candidateStart.isBefore(sEnd.plusMinutes(serviceMin))) {
-//                        Log.d("TAG13", " 6 " + candidateStart);
-//                        ok = false; break;
-//                    }
-//                }
-//            }
-//
-//            if (ok) {
-//                allowed.add(m);
-//                Log.d("TAG13", " 6 " + allowed);
-//            }
-//        }
-//        // Agar hammasi o'chib ketsa ham spinner ishlashi uchun fallback qoldirmaymiz:
-//        // allowed bo'sh qolsa, foydalanuvchi boshqa soatni tanlaydi.
-//        SpinnerAdapter adapter_young = new SpinnerAdapter(this, allowed, R.layout.spinner);
-//        spinner_min.setAdapter(adapter_young);
-//        spinner_min.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//            @Override
-//            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-//                min = parentView.getItemAtPosition(position).toString();
-//            }
-//
-//            @Override
-//            public void onNothingSelected(AdapterView<?> parentView) {}
-//        });
-//    }
-
-
-
-
-
     private void updateMinutesSpinner() {
-        if (spinner_min == null || hours == null) return;
+        if (spinner_min == null || hours == null || hours.isEmpty()) {
+            return;
+        }
 
-        List<String> minutesList = new ArrayList<>(Arrays.asList("00", "10", "20", "30", "40", "50"));
+        int rawServiceMin;
+        try {
+            rawServiceMin = Integer.parseInt(hairTime);
+        } catch (NumberFormatException e) {
+            rawServiceMin = 40;
+            Log.e("updateMinutesSpinner", "hairTime parse error. Using default 40 min.", e);
+        }
 
-        if (busySlots != null && !busySlots.isEmpty()) {
-            Iterator<String> iterator = minutesList.iterator();
-            while (iterator.hasNext()) {
-                String m = iterator.next();
-                LocalTime candidate = LocalTime.of(Integer.parseInt(hours), Integer.parseInt(m));
+        int selectedHour = Integer.parseInt(hours);
+        String[] allMinutes = {"00", "10", "20", "30", "40", "50"};
+        List<String> allowed = new ArrayList<>();
 
-                for (TimeSlotView.TimeSlot slot : busySlots) {
-                    if (!candidate.isBefore(slot.getStart()) && candidate.isBefore(slot.getEnd())) {
-                        iterator.remove(); // 🔥 бу вақт олиб ташланади
-                        break;
+        // Har bir 10 daqiqalik intervalni tekshirib chiqamiz
+        for (String m : allMinutes) {
+            int minInt = Integer.parseInt(m);
+            LocalTime candidateStart = LocalTime.of(selectedHour, minInt);
+
+            // TUZATISH: Navbatning tugash vaqtini YAXLITLANMAGAN, HAQIQIY xizmat vaqti bilan hisoblaymiz.
+            // Bu 45 daqiqalik xizmatni 50 daqiqa deb xato hisoblashni oldini oladi.
+            LocalTime candidateEnd = candidateStart.plusMinutes(rawServiceMin > 0 ? rawServiceMin : 10);
+
+            boolean isAvailable = true; // Dastlab bu vaqtni bo'sh deb hisoblaymiz
+
+            if (busySlots != null && !busySlots.isEmpty()) {
+                for (TimeSlotView.TimeSlot busySlot : busySlots) {
+                    LocalTime busyStart = busySlot.getStart();
+                    LocalTime busyEnd = busySlot.getEnd();
+
+                    // Asosiy va eng to'g'ri kesishish tekshiruvi.
+                    // [A, B) va [C, D) intervallar kesishadi, qachonki (A < D) va (B > C) bo'lsa.
+                    boolean overlaps = candidateStart.isBefore(busyEnd) && candidateEnd.isAfter(busyStart);
+
+                    if (overlaps) {
+                        isAvailable = false;
+                        break; // Bitta kesishish topilsa, boshqalarini tekshirish shart emas
                     }
                 }
             }
+
+            if (isAvailable) {
+                allowed.add(m);
+            }
         }
 
-        SpinnerAdapter adapter_young = new SpinnerAdapter(this, minutesList, R.layout.spinner);
+        SpinnerAdapter adapter_young = new SpinnerAdapter(this, allowed, R.layout.spinner);
         spinner_min.setAdapter(adapter_young);
         spinner_min.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -644,6 +601,44 @@ public void ReadDb() {
             public void onNothingSelected(AdapterView<?> parentView) {}
         });
     }
+
+
+
+
+
+
+//    private void updateMinutesSpinner() {
+//        if (spinner_min == null || hours == null) return;
+//
+//        List<String> minutesList = new ArrayList<>(Arrays.asList("00", "10", "20", "30", "40", "50"));
+//
+//        if (busySlots != null && !busySlots.isEmpty()) {
+//            Iterator<String> iterator = minutesList.iterator();
+//            while (iterator.hasNext()) {
+//                String m = iterator.next();
+//                LocalTime candidate = LocalTime.of(Integer.parseInt(hours), Integer.parseInt(m));
+//
+//                for (TimeSlotView.TimeSlot slot : busySlots) {
+//                    if (!candidate.isBefore(slot.getStart()) && candidate.isBefore(slot.getEnd())) {
+//                        iterator.remove(); // 🔥 бу вақт олиб ташланади
+//                        break;
+//                    }
+//                }
+//            }
+//        }
+//
+//        SpinnerAdapter adapter_young = new SpinnerAdapter(this, minutesList, R.layout.spinner);
+//        spinner_min.setAdapter(adapter_young);
+//        spinner_min.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//            @Override
+//            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+//                min = parentView.getItemAtPosition(position).toString();
+//            }
+//
+//            @Override
+//            public void onNothingSelected(AdapterView<?> parentView) {}
+//        });
+//    }
 
 
 
