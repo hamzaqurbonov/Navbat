@@ -33,6 +33,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -51,6 +52,8 @@ import com.bc.sartarosh.TimeModel;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.timepicker.MaterialTimePicker;
+import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -100,11 +103,36 @@ public class BarberActivity extends AppCompatActivity {
         initViews();
         addTimeSlotView();
 
-//        readDb();
 
         barbesReadDb(DateUtils.dateDDMMYY());
 
     }
+
+
+
+    private void updateDb(TimeModel timeModel) {
+        String uid = mAuth.getCurrentUser().getUid();
+
+        int hour = Integer.parseInt(hours);
+        int minute = Integer.parseInt(min);
+
+        int endMinute = Integer.parseInt(min) + Integer.parseInt(hairTime);
+        int endHour = hour + (endMinute >= 60 ? 1 : 0);
+        endMinute = endMinute % 60;
+
+        String newSlot = String.format("%02d:%02d-%02d:%02d", hour, minute, endHour, endMinute);
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("slot", newSlot);
+
+        db.collection("Barbers").document(uid)
+                .collection("Customer1").document(timeModel.getDocId())
+                .update(updates)
+                .addOnSuccessListener(a -> Toast.makeText(this, "Slot таҳрирланди!", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Toast.makeText(this, "Xatolik: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+    }
+
+
 
 
     private void plusDate() {
@@ -149,7 +177,7 @@ public class BarberActivity extends AppCompatActivity {
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet());
+        findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet(null));
 
         dd = DateUtils.dateDD();
         mm = DateUtils.dateMM();
@@ -368,12 +396,30 @@ public class BarberActivity extends AppCompatActivity {
         }
 
         // 🔹 model
-        public static class TimeSlot {
-            LocalTime start, end;
+//        public static class TimeSlot {
+//            LocalTime start, end;
+//
+//            public TimeSlot(LocalTime s, LocalTime e) {
+//                start = s;
+//                end = e;
+//            }
+//        }
 
-            public TimeSlot(LocalTime s, LocalTime e) {
-                start = s;
-                end = e;
+        public static class TimeSlot {
+            private LocalTime start;
+            private LocalTime end;
+
+            public TimeSlot(LocalTime start, LocalTime end) {
+                this.start = start;
+                this.end = end;
+            }
+
+            public LocalTime getStart() {
+                return start;
+            }
+
+            public LocalTime getEnd() {
+                return end;
             }
         }
     }
@@ -394,7 +440,7 @@ public class BarberActivity extends AppCompatActivity {
             return;
         }
 
-        // ⏰ Hozirgi vaqt
+        //  Hozirgi vaqt
         LocalDateTime now = LocalDateTime.now();
         int currentHour = now.getHour();
         int currentMinute = now.getMinute();
@@ -434,70 +480,131 @@ public class BarberActivity extends AppCompatActivity {
     }
 
 
-    private void showMaterialTimeBottomSheet() {
-        // BottomSheetDialog яратиш
+    public void showMaterialTimeBottomSheet(@Nullable TimeModel timeModel) {
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
         View bottomSheetView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_time_picker, null, false);
         bottomSheetDialog.setContentView(bottomSheetView);
 
-        // Spinner'ни view орқали оламиз (ЭЪТИБОР БЕРИН!)
         spinner_min = bottomSheetView.findViewById(R.id.spinner_min);
         spinner_hours = bottomSheetView.findViewById(R.id.spinner_hours);
 
+        // Spinner adapterlarini улаймиз
+        String[] spinner_hours_list = {"08","09","10","11","12","13","14","15","16","17","18","19","20"};
+        SpinnerAdapter adapter_hours = new SpinnerAdapter(this, Arrays.asList(spinner_hours_list), R.layout.spinner);
+        spinner_hours.setAdapter(adapter_hours);
 
-        if (spinner_hours != null) {
+        String[] spinner_min_list = {"00","10","20","30","40","50"};
+        SpinnerAdapter adapter_min = new SpinnerAdapter(this, Arrays.asList(spinner_min_list), R.layout.spinner);
+        spinner_min.setAdapter(adapter_min);
 
-            String[] spinner_hours_list = {"08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"};
-            SpinnerAdapter adapter_hours = new SpinnerAdapter(this, Arrays.asList(spinner_hours_list), R.layout.spinner);
-            spinner_hours.setAdapter(adapter_hours);
-            spinner_hours.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                    String selectedOption = parentView.getItemAtPosition(position).toString();
-                    hours = selectedOption;
+        // 🔹 Агар edit режимида бўлса → эски slot’дан соат/дақиқа ажратиб оламиз
+        if (timeModel != null) {
+            String slot = timeModel.getFirst(); // масалан: "09:20-09:50"
+            String[] parts = slot.split("-");
+            if (parts.length > 0) {
+                String[] hm = parts[0].split(":");
+                if (hm.length == 2) {
+                    String oldHour = hm[0];
+                    String oldMinute = hm[1];
+
+                    int hourPos = Arrays.asList(spinner_hours_list).indexOf(oldHour);
+                    int minPos = Arrays.asList(spinner_min_list).indexOf(oldMinute);
+                    if (hourPos >= 0) spinner_hours.setSelection(hourPos);
+                    if (minPos >= 0) spinner_min.setSelection(minPos);
                 }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> parentView) {
-                }
-            });
-
+            }
         }
-        if (spinner_min != null) {
 
-            // SpinnerAdapter тайинлаш
-            String[] spinner_young_list = {"00", "10", "20", "30", "40", "50"};
-            SpinnerAdapter adapter_young = new SpinnerAdapter(this, Arrays.asList(spinner_young_list), R.layout.spinner);
-            spinner_min.setAdapter(adapter_young);
-            spinner_min.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                    String selectedOption = parentView.getItemAtPosition(position).toString();
-                    min = selectedOption;
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> parentView) {
-                }
-            });
-        } else {
-        }
 
         // OK тугма
         Button okButton = bottomSheetView.findViewById(R.id.btn_ok);
-        if (okButton != null) {
+        okButton.setOnClickListener(v -> {
+            String selectedHour = spinner_hours.getSelectedItem().toString();
+            String selectedMinute = spinner_min.getSelectedItem().toString();
+            hours = selectedHour;
+            min = selectedMinute;
 
-
-            okButton.setOnClickListener(v -> {
+            if (timeModel == null) {
+                Log.d("TAG14", "showMaterialTimeBottomSheet: 1 ");
                 writeDb();
-                activityList.clear();
-                readDb();
-                bottomSheetDialog.dismiss();
-            });
-        }
+            } else {
+                Log.d("TAG14", "showMaterialTimeBottomSheet: 2 ");
+                updateDb(timeModel);
+            }
+            activityList.clear();
+            readDb();
+            bottomSheetDialog.dismiss();
+        });
 
         bottomSheetDialog.show();
     }
+
+
+
+//    public void showMaterialTimeBottomSheet() {
+//        // BottomSheetDialog яратиш
+//        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+//        View bottomSheetView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_time_picker, null, false);
+//        bottomSheetDialog.setContentView(bottomSheetView);
+//
+//        // Spinner'ни view орқали оламиз (ЭЪТИБОР БЕРИН!)
+//        spinner_min = bottomSheetView.findViewById(R.id.spinner_min);
+//        spinner_hours = bottomSheetView.findViewById(R.id.spinner_hours);
+//
+//
+//        if (spinner_hours != null) {
+//
+//            String[] spinner_hours_list = {"08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"};
+//            SpinnerAdapter adapter_hours = new SpinnerAdapter(this, Arrays.asList(spinner_hours_list), R.layout.spinner);
+//            spinner_hours.setAdapter(adapter_hours);
+//            spinner_hours.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//                @Override
+//                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+//                    String selectedOption = parentView.getItemAtPosition(position).toString();
+//                    hours = selectedOption;
+//                }
+//
+//                @Override
+//                public void onNothingSelected(AdapterView<?> parentView) {
+//                }
+//            });
+//
+//        }
+//        if (spinner_min != null) {
+//
+//            // SpinnerAdapter тайинлаш
+//            String[] spinner_young_list = {"00", "10", "20", "30", "40", "50"};
+//            SpinnerAdapter adapter_young = new SpinnerAdapter(this, Arrays.asList(spinner_young_list), R.layout.spinner);
+//            spinner_min.setAdapter(adapter_young);
+//            spinner_min.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+//                @Override
+//                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+//                    String selectedOption = parentView.getItemAtPosition(position).toString();
+//                    min = selectedOption;
+//                }
+//
+//                @Override
+//                public void onNothingSelected(AdapterView<?> parentView) {
+//                }
+//            });
+//        } else {
+//        }
+//
+//        // OK тугма
+//        Button okButton = bottomSheetView.findViewById(R.id.btn_ok);
+//        if (okButton != null) {
+//
+//
+//            okButton.setOnClickListener(v -> {
+//                writeDb();
+//                activityList.clear();
+//                readDb();
+//                bottomSheetDialog.dismiss();
+//            });
+//        }
+//
+//        bottomSheetDialog.show();
+//    }
 
 
     @Override

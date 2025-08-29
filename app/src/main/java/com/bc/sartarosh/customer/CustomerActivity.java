@@ -312,9 +312,9 @@ public class CustomerActivity extends AppCompatActivity {
                 .whereEqualTo("day-time", stringPlusDD)   // faqat tanlangan sana bo'yicha
                 .get()
                 .addOnSuccessListener(query -> {
-//                    if (!query.isEmpty()) {
-//                        Toast.makeText(this, "Siz bir kunda faqat bitta navbat olishingiz mumkin", Toast.LENGTH_SHORT).show();
-//                    } else {
+                    if (!query.isEmpty()) {
+                        Toast.makeText(this, "Siz bir kunda faqat bitta navbat olishingiz mumkin", Toast.LENGTH_SHORT).show();
+                    } else {
 
                         db.collection("Barbers").document(barbershopId).collection("Customer1")
                                 .add(item)
@@ -323,7 +323,7 @@ public class CustomerActivity extends AppCompatActivity {
 
                         activityList.clear();
                         ReadDb();
-//                    }
+                    }
                 })
                 .addOnFailureListener(e -> Log.e("TAG", "Xatolik: " + e.getMessage()));
 

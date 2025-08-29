@@ -43,12 +43,22 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
 
+
         String BarbersId = activityllist.get(position).getBarbersId();
         String DocId = activityllist.get(position).getDocId();
+        TimeModel currentTimeSlot = activityllist.get(position);
+
         ((BarberAdapter.HomeViewAdapterHolder) holder).name.setText(activityllist.get(position).getName());
         ((HomeViewAdapterHolder) holder).phone.setText(activityllist.get(position).getPhone1());
         ((BarberAdapter.HomeViewAdapterHolder) holder).TextViewName.setText(activityllist.get(position).getFirst());
 
+        ((BarberAdapter.HomeViewAdapterHolder) holder).edit_select.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                Toast.makeText(v.getContext(), "Matin tahrirlandi!" + currentTimeSlot, Toast.LENGTH_SHORT).show();
+                barberActivity.showMaterialTimeBottomSheet(activityllist.get(position));
+            }
+        });
 
         ((BarberAdapter.HomeViewAdapterHolder) holder).deleteSelect.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -98,7 +108,7 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
     public class HomeViewAdapterHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         View view;
         TextView TextViewName, name, phone;
-        ImageView deleteSelect;
+        ImageView deleteSelect, edit_select;
         public HomeViewAdapterHolder(View v) {
             super(v);
             view = v;
@@ -106,6 +116,7 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
             name = view.findViewById(R.id.name);
             TextViewName = view.findViewById(R.id.time);
             deleteSelect = view.findViewById(R.id.delete_select);
+            edit_select = view.findViewById(R.id.edit_select);
         }
 
         @Override
