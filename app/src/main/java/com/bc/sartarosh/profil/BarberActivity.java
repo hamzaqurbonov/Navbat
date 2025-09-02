@@ -52,6 +52,7 @@ import com.bc.sartarosh.TimeModel;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
 import com.google.firebase.auth.FirebaseAuth;
@@ -88,6 +89,7 @@ public class BarberActivity extends AppCompatActivity {
     String getName, getPhone1, userID, hairTime, beardTime, statDate;
     int clickPlusCount = 0, plusDD;
     ProgressBar progressBar;
+    TextInputEditText edit_spinner_name;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,12 +111,12 @@ public class BarberActivity extends AppCompatActivity {
     }
 
 
-
     private void updateDb(TimeModel timeModel) {
         String uid = mAuth.getCurrentUser().getUid();
 
         int hour = Integer.parseInt(hours);
         int minute = Integer.parseInt(min);
+//        String edit_spinner = edit_spinner_name.getText().toString();
 
         int endMinute = Integer.parseInt(min) + Integer.parseInt(hairTime);
         int endHour = hour + (endMinute >= 60 ? 1 : 0);
@@ -124,6 +126,7 @@ public class BarberActivity extends AppCompatActivity {
 
         Map<String, Object> updates = new HashMap<>();
         updates.put("slot", newSlot);
+        updates.put("name", edit_spinner_name.getText());
 
         db.collection("Barbers").document(uid)
                 .collection("Customer1").document(timeModel.getDocId())
@@ -131,8 +134,6 @@ public class BarberActivity extends AppCompatActivity {
                 .addOnSuccessListener(a -> Toast.makeText(this, "Slot таҳрирланди!", Toast.LENGTH_SHORT).show())
                 .addOnFailureListener(e -> Toast.makeText(this, "Xatolik: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
-
-
 
 
     private void plusDate() {
@@ -167,11 +168,14 @@ public class BarberActivity extends AppCompatActivity {
 
 
     private void initViews() {
+
+
         barbes_date = findViewById(R.id.barbes_date);
         barbes_date_text = findViewById(R.id.barbes_date_text);
         progressBar = findViewById(R.id.progressBar);
         user_id = findViewById(R.id.user_id);
         recyclerView = findViewById(R.id.recycler);
+
 
 
         toolbar = findViewById(R.id.toolbar);
@@ -430,6 +434,7 @@ public class BarberActivity extends AppCompatActivity {
         String minuteStr = min.toString();
         String uid = mAuth.getCurrentUser().getUid();
 
+
         if (hourStr.isEmpty() || minuteStr.isEmpty()) return;
 
         int hour = Integer.parseInt(hourStr);
@@ -457,7 +462,6 @@ public class BarberActivity extends AppCompatActivity {
         }
 
 
-
         Log.d("hairTime", "Xatolik: 2 " + hairTime);
         int endMinute = Integer.parseInt(minute + hairTime);
         int endHour = hour + (endMinute >= 60 ? 1 : 0);
@@ -467,7 +471,8 @@ public class BarberActivity extends AppCompatActivity {
 
         Map<String, Object> item = new HashMap<>();
         item.put("slot", slot);
-        item.put("name", "Sartarosh band etdi");
+
+        item.put("name", "Sartarosh bandladi " + edit_spinner_name.getText());
         item.put("customerUid", uid);
 //        item.put("phone", customerPhone);
         item.put("data", data);
@@ -487,13 +492,14 @@ public class BarberActivity extends AppCompatActivity {
 
         spinner_min = bottomSheetView.findViewById(R.id.spinner_min);
         spinner_hours = bottomSheetView.findViewById(R.id.spinner_hours);
+        edit_spinner_name = bottomSheetView.findViewById(R.id.edit_spinner_name);
 
         // Spinner adapterlarini улаймиз
-        String[] spinner_hours_list = {"08","09","10","11","12","13","14","15","16","17","18","19","20"};
+        String[] spinner_hours_list = {"08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"};
         SpinnerAdapter adapter_hours = new SpinnerAdapter(this, Arrays.asList(spinner_hours_list), R.layout.spinner);
         spinner_hours.setAdapter(adapter_hours);
 
-        String[] spinner_min_list = {"00","10","20","30","40","50"};
+        String[] spinner_min_list = {"00", "10", "20", "30", "40", "50"};
         SpinnerAdapter adapter_min = new SpinnerAdapter(this, Arrays.asList(spinner_min_list), R.layout.spinner);
         spinner_min.setAdapter(adapter_min);
 
@@ -538,7 +544,6 @@ public class BarberActivity extends AppCompatActivity {
 
         bottomSheetDialog.show();
     }
-
 
 
 //    public void showMaterialTimeBottomSheet() {
