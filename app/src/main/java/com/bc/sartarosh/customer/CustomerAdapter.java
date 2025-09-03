@@ -64,6 +64,7 @@ public class CustomerAdapter extends RecyclerView.Adapter< RecyclerView.ViewHold
             Log.d("TAG4", "onBindViewHolder: " + DocId  + " " + getCustomerUserID + " " + ((CustomerAdapter.HomeViewAdapterHolder) holder).customerUserID);
             ((CustomerAdapter.HomeViewAdapterHolder) holder).deleteSelect.setVisibility(View.GONE);
         }
+        ((CustomerAdapter.HomeViewAdapterHolder) holder).edit_select.setVisibility(View.GONE);
 
 
         ((CustomerAdapter.HomeViewAdapterHolder) holder).deleteSelect.setOnClickListener(new View.OnClickListener() {
@@ -121,7 +122,7 @@ public class CustomerAdapter extends RecyclerView.Adapter< RecyclerView.ViewHold
     public class HomeViewAdapterHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         View view;
         TextView TextViewName, phone, name;
-        ImageView deleteSelect;
+        ImageView deleteSelect, edit_select;
         String customerUserID;
 
         public HomeViewAdapterHolder(View v) {
@@ -133,6 +134,8 @@ public class CustomerAdapter extends RecyclerView.Adapter< RecyclerView.ViewHold
             name = view.findViewById(R.id.name);
 
             deleteSelect = view.findViewById(R.id.delete_select);
+            edit_select = view.findViewById(R.id.edit_select);
+
 
 //                view.setOnClickListener(this);
         }

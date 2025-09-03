@@ -58,6 +58,7 @@ import com.bc.sartarosh.profil.LoginActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -496,8 +497,8 @@ public void ReadDb() {
         // Spinner'ни view орқали оламиз (ЭЪТИБОР БЕРИН!)
         spinner_min = bottomSheetView.findViewById(R.id.spinner_min);
         spinner_hours = bottomSheetView.findViewById(R.id.spinner_hours);
-
-
+        TextInputLayout edit_spinner_name_1 = bottomSheetView.findViewById(R.id.edit_spinner_name_1);
+        edit_spinner_name_1.setVisibility(View.GONE);
         if (spinner_hours != null) {
             int start = Integer.parseInt(startHour);
             int end = Integer.parseInt(endHour) - 1;
@@ -673,6 +674,19 @@ public void ReadDb() {
             return true;
         } else if (id == R.id.notification) {
             checkNotificationPermission();
+        } else if (id == R.id.share_app) {
+            Intent intent = new Intent();
+            intent.setAction(Intent.ACTION_SEND);
+            intent.putExtra(Intent.EXTRA_TEXT,
+                    "\n- Янги Сартарош иловаси" +
+                    "\n- Онлайн навбат олиш имконияти!" +
+                    "\n- Севимли устангизни танланг" +
+                    "\n- Вақтингизни тежанг" +
+                    "\n- Барча сартарошлар ва мижозлар учун қулай платформа!" +
+                    "\n " +
+                    "\nhttps://play.google.com/store/apps/details?id=com.bc.sartarosh");
+            intent.setType("text/plain");
+            startActivity(intent);
         }
 
         return super.onOptionsItemSelected(item);

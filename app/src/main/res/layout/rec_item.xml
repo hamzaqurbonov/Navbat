@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -10,92 +9,75 @@
     app:cardBackgroundColor="@color/white_E1E1E1"
     app:cardCornerRadius="4dp">
 
-    <RelativeLayout
+    <!-- Card ichidagi asosiy layout -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="3dp"
-        android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:gravity="center_vertical">
 
+        <!-- Chap tarafdagi ma'lumotlar -->
         <LinearLayout
-            android:id="@+id/linearLayout"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:layout_marginStart="2dp"
-            android:layout_marginEnd="0dp"
-            android:layout_toStartOf="@+id/relativeLayout2"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
                 android:id="@+id/time"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
-                android:layout_weight="1"
-                android:padding="4dp"
                 android:text="Вақт"
                 android:textColor="@color/purple_500"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:padding="4dp"/>
+
             <TextView
                 android:id="@+id/name"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
-                android:layout_weight="1"
-                android:padding="4dp"
                 android:text="Isim"
                 android:textColor="@color/black"
-                android:textStyle="italic" />
+                android:textStyle="italic"
+                android:padding="4dp"/>
 
             <TextView
                 android:id="@+id/phone"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
-                android:layout_weight="1"
-                android:padding="4dp"
                 android:text="phone"
                 android:textColor="@color/black"
-                android:textStyle="italic" />
-
+                android:textStyle="italic"
+                android:padding="4dp"/>
         </LinearLayout>
 
+        <!-- O'ng tarafdagi ikonalar -->
         <LinearLayout
-            android:id="@+id/relativeLayout2"
-            android:layout_width="40dp"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentEnd="true"
-            android:layout_marginTop="0dp"
-            android:layout_marginEnd="1dp"
-            android:gravity="center|end"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="vertical"
-            android:padding="0dp">
+            android:gravity="center"
+            >
 
             <ImageView
                 android:id="@+id/delete_select"
                 android:layout_width="25dp"
                 android:layout_height="25dp"
-                android:layout_alignParentEnd="true"
-                android:layout_marginEnd="5dp"
-                android:layout_marginBottom="15dp"
-                android:src="@drawable/delete_24px" />
+                android:src="@drawable/delete_24px"
+                android:layout_marginBottom="8dp"/>
+
             <ImageView
                 android:id="@+id/edit_select"
                 android:layout_width="25dp"
                 android:layout_height="25dp"
-                android:layout_alignParentEnd="true"
-                android:layout_marginEnd="5dp"
-                android:src="@drawable/ink_pen_24px" />
-
+                android:layout_marginTop="8dp"
+                android:src="@drawable/ink_pen_24px"/>
         </LinearLayout>
 
-
-
-    </RelativeLayout>
-
-
+    </LinearLayout>
 
 </androidx.cardview.widget.CardView>
+
+
 

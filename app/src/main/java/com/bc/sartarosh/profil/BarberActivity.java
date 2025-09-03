@@ -114,6 +114,7 @@ public class BarberActivity extends AppCompatActivity {
     private void updateDb(TimeModel timeModel) {
         String uid = mAuth.getCurrentUser().getUid();
 
+
         int hour = Integer.parseInt(hours);
         int minute = Integer.parseInt(min);
 //        String edit_spinner = edit_spinner_name.getText().toString();
@@ -126,7 +127,8 @@ public class BarberActivity extends AppCompatActivity {
 
         Map<String, Object> updates = new HashMap<>();
         updates.put("slot", newSlot);
-        updates.put("name", edit_spinner_name.getText());
+        updates.put("name", edit_spinner_name.getText().toString() );
+
 
         db.collection("Barbers").document(uid)
                 .collection("Customer1").document(timeModel.getDocId())
@@ -169,7 +171,7 @@ public class BarberActivity extends AppCompatActivity {
 
     private void initViews() {
 
-
+//        edit_spinner_name = findViewById(R.id.edit_spinner_name);
         barbes_date = findViewById(R.id.barbes_date);
         barbes_date_text = findViewById(R.id.barbes_date_text);
         progressBar = findViewById(R.id.progressBar);
@@ -472,7 +474,7 @@ public class BarberActivity extends AppCompatActivity {
         Map<String, Object> item = new HashMap<>();
         item.put("slot", slot);
 
-        item.put("name", "Sartarosh bandladi " + edit_spinner_name.getText());
+        item.put("name", edit_spinner_name.getText().toString() + " sartarosh bandladi");
         item.put("customerUid", uid);
 //        item.put("phone", customerPhone);
         item.put("data", data);
@@ -506,6 +508,10 @@ public class BarberActivity extends AppCompatActivity {
         // 🔹 Агар edit режимида бўлса → эски slot’дан соат/дақиқа ажратиб оламиз
         if (timeModel != null) {
             String slot = timeModel.getFirst(); // масалан: "09:20-09:50"
+            String getName = timeModel.getName();
+
+            edit_spinner_name.setText(getName);
+
             String[] parts = slot.split("-");
             if (parts.length > 0) {
                 String[] hm = parts[0].split(":");
@@ -546,71 +552,6 @@ public class BarberActivity extends AppCompatActivity {
     }
 
 
-//    public void showMaterialTimeBottomSheet() {
-//        // BottomSheetDialog яратиш
-//        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
-//        View bottomSheetView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_time_picker, null, false);
-//        bottomSheetDialog.setContentView(bottomSheetView);
-//
-//        // Spinner'ни view орқали оламиз (ЭЪТИБОР БЕРИН!)
-//        spinner_min = bottomSheetView.findViewById(R.id.spinner_min);
-//        spinner_hours = bottomSheetView.findViewById(R.id.spinner_hours);
-//
-//
-//        if (spinner_hours != null) {
-//
-//            String[] spinner_hours_list = {"08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"};
-//            SpinnerAdapter adapter_hours = new SpinnerAdapter(this, Arrays.asList(spinner_hours_list), R.layout.spinner);
-//            spinner_hours.setAdapter(adapter_hours);
-//            spinner_hours.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//                @Override
-//                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-//                    String selectedOption = parentView.getItemAtPosition(position).toString();
-//                    hours = selectedOption;
-//                }
-//
-//                @Override
-//                public void onNothingSelected(AdapterView<?> parentView) {
-//                }
-//            });
-//
-//        }
-//        if (spinner_min != null) {
-//
-//            // SpinnerAdapter тайинлаш
-//            String[] spinner_young_list = {"00", "10", "20", "30", "40", "50"};
-//            SpinnerAdapter adapter_young = new SpinnerAdapter(this, Arrays.asList(spinner_young_list), R.layout.spinner);
-//            spinner_min.setAdapter(adapter_young);
-//            spinner_min.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-//                @Override
-//                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-//                    String selectedOption = parentView.getItemAtPosition(position).toString();
-//                    min = selectedOption;
-//                }
-//
-//                @Override
-//                public void onNothingSelected(AdapterView<?> parentView) {
-//                }
-//            });
-//        } else {
-//        }
-//
-//        // OK тугма
-//        Button okButton = bottomSheetView.findViewById(R.id.btn_ok);
-//        if (okButton != null) {
-//
-//
-//            okButton.setOnClickListener(v -> {
-//                writeDb();
-//                activityList.clear();
-//                readDb();
-//                bottomSheetDialog.dismiss();
-//            });
-//        }
-//
-//        bottomSheetDialog.show();
-//    }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -640,6 +581,19 @@ public class BarberActivity extends AppCompatActivity {
             return true;
         } else if (id == R.id.notification) {
             checkNotificationPermission();
+        }  else if (id == R.id.share_app) {
+            Intent intent = new Intent();
+            intent.setAction(Intent.ACTION_SEND);
+            intent.putExtra(Intent.EXTRA_TEXT,
+                    "\n- Янги Сартарош иловаси" +
+                            "\n- Онлайн навбат олиш имконияти!" +
+                            "\n- Севимли устангизни танланг" +
+                            "\n- Вақтингизни тежанг" +
+                            "\n- Барча сартарошлар ва мижозлар учун қулай платформа!" +
+                            "\n " +
+                            "\nhttps://play.google.com/store/apps/details?id=com.bc.sartarosh");
+            intent.setType("text/plain");
+            startActivity(intent);
         }
 
         return super.onOptionsItemSelected(item);
