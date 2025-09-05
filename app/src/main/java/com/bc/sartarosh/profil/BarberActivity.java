@@ -24,6 +24,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -69,121 +70,164 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 public class BarberActivity extends AppCompatActivity {
     private static final int NOTIFICATION_PERMISSION_CODE = 101;
-    private EditText editHour, editMinute;
-    private Button addHourButton;
     private TimeSlotView timeSlotView;
     private RecyclerView recyclerView;
     private BarberAdapter adapter;
     private final List<TimeModel> activityList = new ArrayList<>();
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private FirebaseAuth mAuth;
-    private ImageView userButton;
-    Toolbar toolbar;
-    TextView barbes_date_text, user_id, barbes_date;
+    private TextView barbes_date_text, user_id, barbes_date;
     String barbershopId;
-    String data, dd, mm, yy, min, hours;
-    Spinner spinner_min, spinner_hours;
-    TimeModel timeModel;
-    String getName, getPhone1, userID, hairTime, beardTime, statDate;
+    String data, dd, mm, yy, min, hours, min_beard, hours_beard;
+    Spinner spinner_min, spinner_hours, spinner_hours_beard, spinner_min_beard,from_spinner_hours, from_spinner_min, to_spinner_hours, to_spinner_min ;
+    String hairTime, beardTime, childrenTime;
+    int totalServiceTime = 0;
     int clickPlusCount = 0, plusDD;
     ProgressBar progressBar;
-    TextInputEditText edit_spinner_name;
+    TextInputEditText edit_spinner_name, edit_spinner_name_beard;
+    Toolbar toolbar;
+
+    // 🔹 Cache uchun
+    private BarberProfile cachedProfile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_barber);
 
         barbershopId = SharedPreferencesUtil.getString(this, "BarbesID", "");
-
         mAuth = FirebaseAuth.getInstance();
-
 
         initViews();
         addTimeSlotView();
 
-
-        barbesReadDb(DateUtils.dateDDMMYY());
-
+        // 🔹 faqat bir marta profile o‘qiladi
+        loadBarberProfile();
     }
 
 
-    private void updateDb(TimeModel timeModel) {
-        String uid = mAuth.getCurrentUser().getUid();
+
+    public void bookingBottom(@Nullable TimeModel timeModel) {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View bottomSheetView = LayoutInflater.from(this).inflate(R.layout.barber_sheet_time_picker, null, false);
+        bottomSheetDialog.setContentView(bottomSheetView);
+
+        // -----------Soch olish -------------------------
+        from_spinner_min = bottomSheetView.findViewById(R.id.from_spinner_min);
+        from_spinner_hours = bottomSheetView.findViewById(R.id.from_spinner_hours);
+
+        to_spinner_min = bottomSheetView.findViewById(R.id.to_spinner_min);
+        to_spinner_hours = bottomSheetView.findViewById(R.id.to_spinner_hours);
+
+        String[] spinner_hours_list = {"08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"};
+        SpinnerAdapter adapter_hours = new SpinnerAdapter(this, Arrays.asList(spinner_hours_list), R.layout.spinner);
+        spinner_hours.setAdapter(adapter_hours);
+
+        String[] spinner_min_list = {"00", "10", "20", "30", "40", "50"};
+        SpinnerAdapter adapter_min = new SpinnerAdapter(this, Arrays.asList(spinner_min_list), R.layout.spinner);
+        spinner_min.setAdapter(adapter_min);
 
 
-        int hour = Integer.parseInt(hours);
-        int minute = Integer.parseInt(min);
-//        String edit_spinner = edit_spinner_name.getText().toString();
-
-        int endMinute = Integer.parseInt(min) + Integer.parseInt(hairTime);
-        int endHour = hour + (endMinute >= 60 ? 1 : 0);
-        endMinute = endMinute % 60;
-
-        String newSlot = String.format("%02d:%02d-%02d:%02d", hour, minute, endHour, endMinute);
-
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("slot", newSlot);
-        updates.put("name", edit_spinner_name.getText().toString() );
 
 
-        db.collection("Barbers").document(uid)
-                .collection("Customer1").document(timeModel.getDocId())
-                .update(updates)
-                .addOnSuccessListener(a -> Toast.makeText(this, "Slot таҳрирланди!", Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e -> Toast.makeText(this, "Xatolik: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        Button okButton = bottomSheetView.findViewById(R.id.btn_ok);
+        okButton.setOnClickListener(v -> {
+
+            activityList.clear();
+            readDb(barbes_date.getText().toString());
+            bottomSheetDialog.dismiss();
+        });
+
+        bottomSheetDialog.show();
     }
 
 
-    private void plusDate() {
-        if (clickPlusCount <= 1) {
-            clickPlusCount++;
-            plusDD = Integer.parseInt(dd) + clickPlusCount;
-            String date = DateUtils.datePlusDays(clickPlusCount);
-            barbes_date.setText(date);
-            Log.d("TAG5", "plusDate: " + date);
+    // 🔹 BottomSheet orqali slot qo‘shish / tahrirlash qismi o‘zгармаган
+    public void showMaterialTimeBottomSheet(@Nullable TimeModel timeModel) {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View bottomSheetView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_time_picker, null, false);
+        bottomSheetDialog.setContentView(bottomSheetView);
 
-            barbesReadDb(date);
-//            readDb();
-        } else {
-            Toast.makeText(this, "Keyingi sanaga o'tib bo'lmaydi", Toast.LENGTH_SHORT).show();
+        CheckBox checkSoch = bottomSheetView.findViewById(R.id.check_soch);
+        CheckBox checkSoqol = bottomSheetView.findViewById(R.id.check_soqol);
+        CheckBox checkBola = bottomSheetView.findViewById(R.id.check_bola);
+        // -----------Soch olish -------------------------
+        spinner_min = bottomSheetView.findViewById(R.id.spinner_min);
+        spinner_hours = bottomSheetView.findViewById(R.id.spinner_hours);
+        edit_spinner_name = bottomSheetView.findViewById(R.id.edit_spinner_name);
+
+        String[] spinner_hours_list = {"08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"};
+        SpinnerAdapter adapter_hours = new SpinnerAdapter(this, Arrays.asList(spinner_hours_list), R.layout.spinner);
+        spinner_hours.setAdapter(adapter_hours);
+
+        String[] spinner_min_list = {"00", "10", "20", "30", "40", "50"};
+        SpinnerAdapter adapter_min = new SpinnerAdapter(this, Arrays.asList(spinner_min_list), R.layout.spinner);
+        spinner_min.setAdapter(adapter_min);
+
+
+        // 🔹 Агар edit режимида бўлса → эски slot’дан соат/дақиқа ажратиб оламиз
+        if (timeModel != null) {
+            String slot = timeModel.getFirst(); // масалан: "09:20-09:50"
+            String getName = timeModel.getName();
+
+            edit_spinner_name.setText(getName);
+
+            String[] parts = slot.split("-");
+            if (parts.length > 0) {
+                String[] hm = parts[0].split(":");
+                if (hm.length == 2) {
+                    String oldHour = hm[0];
+                    String oldMinute = hm[1];
+
+                    int hourPos = Arrays.asList(spinner_hours_list).indexOf(oldHour);
+                    int minPos = Arrays.asList(spinner_min_list).indexOf(oldMinute);
+                    if (hourPos >= 0) spinner_hours.setSelection(hourPos);
+                    if (minPos >= 0) spinner_min.setSelection(minPos);
+                }
+            }
         }
-    }
 
-    private void minusDate() {
-        if (clickPlusCount >= 1) {
-            clickPlusCount--;
-            plusDD = Integer.parseInt(dd) + clickPlusCount;
-            String date = DateUtils.datePlusDays(clickPlusCount);
-            barbes_date.setText(date);
-            Log.d("TAG5", "minusDate: " + plusDD);
+        Button okButton = bottomSheetView.findViewById(R.id.btn_ok);
+        okButton.setOnClickListener(v -> {
+            String selectedHour = spinner_hours.getSelectedItem().toString();
+            String selectedMinute = spinner_min.getSelectedItem().toString();
 
-            barbesReadDb(date);
-//            readDb();
-        } else {
-            Toast.makeText(this, "Keyingi sanaga o'tib bo'lmaydi", Toast.LENGTH_SHORT).show();
-        }
+
+            if (checkSoch.isChecked())  totalServiceTime += Integer.parseInt(hairTime);
+            if (checkSoqol.isChecked()) totalServiceTime += Integer.parseInt(beardTime);
+            if (checkBola.isChecked())  totalServiceTime += Integer.parseInt(childrenTime);
+
+
+            Log.d("TAG15", "checkSoch: " + childrenTime + " " + hairTime);
+            hours = selectedHour;
+            min = selectedMinute;
+//            Log.d("TAG15", "showMaterialTimeBottomSheet: " + hours_beard + " " + min_beard + " " + hours + " " + min);
+            if (timeModel == null) {
+                writeDb();
+            } else {
+                updateDb(timeModel);
+            }
+            activityList.clear();
+            readDb(barbes_date.getText().toString());
+            bottomSheetDialog.dismiss();
+        });
+
+        bottomSheetDialog.show();
     }
 
 
     private void initViews() {
-
-//        edit_spinner_name = findViewById(R.id.edit_spinner_name);
         barbes_date = findViewById(R.id.barbes_date);
         barbes_date_text = findViewById(R.id.barbes_date_text);
         progressBar = findViewById(R.id.progressBar);
         user_id = findViewById(R.id.user_id);
         recyclerView = findViewById(R.id.recycler);
 
-
-
-        toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
         findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet(null));
+        findViewById(R.id.time_input2).setOnClickListener(v -> bookingBottom(null));
 
         dd = DateUtils.dateDD();
         mm = DateUtils.dateMM();
@@ -193,135 +237,136 @@ public class BarberActivity extends AppCompatActivity {
         barbes_date.setText(data);
         plusDD = Integer.parseInt(dd);
 
-        findViewById(R.id.minus_date).setOnClickListener(v -> minusDate());
+        toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
+        findViewById(R.id.minus_date).setOnClickListener(v -> minusDate());
         findViewById(R.id.plus_date).setOnClickListener(v -> plusDate());
     }
 
-
-    public void barbesReadDb(String selectedDate) {
+    // 🔹 profile faqat bir marta o‘qiladi
+    public void loadBarberProfile() {
         db.collection("Barbers").document(barbershopId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (!documentSnapshot.exists()) return;
 
-                    BarberProfile profile = documentSnapshot.toObject(BarberProfile.class);
-                    if (profile == null) return;
+                    cachedProfile = documentSnapshot.toObject(BarberProfile.class);
+                    if (cachedProfile == null) return;
 
-                    Log.e("readDb", "Xatolik: 1 " + profile.getUserID());
-                    hairTime = profile.getHairTime();
-                    beardTime = profile.getBeardTime();
-                    String strictStartHour = profile.getStrictStartHour();
-                    String strictEndHour = profile.getStrictEndHour();
+                    hairTime = cachedProfile.getHairTime();
+                    beardTime = cachedProfile.getBeardTime();
+                    childrenTime = cachedProfile.getChildrenTime();
 
-                    user_id.setText("ID " + profile.getUserID());
-                    barbes_date_text.setText(profile.getName());
+                    user_id.setText("ID " + cachedProfile.getUserID());
+                    barbes_date_text.setText(cachedProfile.getName());
 
-                    if (profile.getUserID() == null || profile.getFcmToken() == null ||
-                            profile.getHairTime() == null || profile.getBeardTime() == null || barbershopId == null) {
-                        Log.e("readDb", "Xatolik: 2");
-                        startActivity(new Intent(this, LoginActivity.class));
-                        finish();
+                    // birinchi marta ochilganda bugungi kun uchun slotlar
+                    readDb(DateUtils.dateDDMMYY());
+                })
+                .addOnFailureListener(e -> Log.e("loadBarberProfile", "Xato: " + e.getMessage()));
+    }
+
+    public String getSelectedDate() {
+        return barbes_date.getText().toString();
+    }
+
+    // 🔹 faqat kundalik slotlarni olish
+    public void readDb(String selectedDate) {
+        if (cachedProfile == null) {
+            loadBarberProfile();
+            return;
+        }
+
+        progressBar.setVisibility(View.VISIBLE);
+        String uid = mAuth.getCurrentUser().getUid();
+        String stringPlusDD = String.format("%02d", plusDD);
+
+        db.collection("Barbers").document(uid)
+                .collection("Customer1")
+                .whereEqualTo("day-time", stringPlusDD)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.e("ReadDb", "Xato: ", task.getException());
                         return;
                     }
 
-                    Log.d("TAG7", "date: 1 " + selectedDate);
-                    boolean found = false;
+                    List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
+                    activityList.clear();
 
-                    List<BarberMapModel> dateList = profile.getKey();
-                    if (dateList != null && !dateList.isEmpty()) {
-                        for (BarberMapModel entry : dateList) {
-                            if (entry.getDate().equals(selectedDate)) {
-                                int startHour = Integer.parseInt(entry.getStartHour());
-                                int endHour = Integer.parseInt(entry.getEndHour());
+                    for (QueryDocumentSnapshot doc : task.getResult()) {
+                        String raw = doc.getString("slot");
+                        String name = doc.getString("name");
+                        String phone1 = doc.getString("phone1");
 
-                                timeSlotView.setStartHour(startHour, endHour);
-                                Log.d("TAG7", "Date: 2 " + selectedDate +
-                                        " Start: " + startHour +
-                                        " End: " + endHour);
+                        if (raw == null || !raw.contains("-")) continue;
 
-                                found = true;
-                                break;
-                            }
+                        activityList.add(new TimeModel(uid, "", doc.getId(), raw, name, phone1, ""));
+
+                        try {
+                            String[] parts = raw.split("-");
+                            LocalTime start = LocalTime.parse(parts[0].trim());
+                            LocalTime end = LocalTime.parse(parts[1].trim());
+                            timeSlots.add(new TimeSlotView.TimeSlot(start, end));
+                        } catch (Exception e) {
+                            Log.w("Parse", "Noto‘g‘ri slot: " + raw);
                         }
                     }
 
-                    // ️ Агар санани топа олмаса → strictStartHour / strictEndHour
-                    if (!found) {
-                        timeSlotView.setStartHour(
-                                Integer.parseInt(strictStartHour),
-                                Integer.parseInt(strictEndHour)
-                        );
-                        Log.d("TAG7", "Default strict hours qo‘llandi: " + strictStartHour + " - " + strictEndHour);
+                    // 🔹 busy slotlarni ko‘rsatish
+                    timeSlotView.setBusySlots(timeSlots);
+                    recyclerView.setLayoutManager(new GridLayoutManager(this, 1));
+
+                    if (adapter == null) {
+                        adapter = new BarberAdapter(this, activityList);
+                        recyclerView.setAdapter(adapter);
+                    } else {
+                        adapter.notifyDataSetChanged();
                     }
 
-                    // Ҳар доим busy slots қайта чизилади
-                    readDb();
-                })
-                .addOnFailureListener(e -> Log.e("readDb", "Xatolik: " + e.getMessage()));
+                    progressBar.setVisibility(View.GONE);
+                });
     }
 
+    // 🔹 sana almashtirishда профил қайта ўқилмайди
+    private void plusDate() {
+        if (clickPlusCount <= 1) {
+            clickPlusCount++;
+            plusDD = Integer.parseInt(dd) + clickPlusCount;
+            String date = DateUtils.datePlusDays(clickPlusCount);
+            barbes_date.setText(date);
+            readDb(date);
+        } else {
+            Toast.makeText(this, "Keyingi sanaga o'tib bo‘lmaydi", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void minusDate() {
+        if (clickPlusCount >= 1) {
+            clickPlusCount--;
+            plusDD = Integer.parseInt(dd) + clickPlusCount;
+            String date = DateUtils.datePlusDays(clickPlusCount);
+            barbes_date.setText(date);
+            readDb(date);
+        } else {
+            Toast.makeText(this, "Oldingi sanaga o'tib bo‘lmaydi", Toast.LENGTH_SHORT).show();
+        }
+    }
 
     private void addTimeSlotView() {
-
         FrameLayout container = findViewById(R.id.schedule_container_barber);
         timeSlotView = new TimeSlotView(this);
-        container.addView(timeSlotView, new FrameLayout.LayoutParams((int) (getResources().getDisplayMetrics().density * 80), ViewGroup.LayoutParams.MATCH_PARENT));
+        container.addView(timeSlotView,
+                new FrameLayout.LayoutParams((int) (getResources().getDisplayMetrics().density * 80),
+                        ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
-
-    public void readDb() {
-
-        String uid = mAuth.getCurrentUser().getUid();
-
-        progressBar.setVisibility(View.VISIBLE);
-
-        String stringPlusDD = String.format("%02d", plusDD);
-        db.collection("Barbers").document(uid).collection("Customer1").whereGreaterThanOrEqualTo("day-time", stringPlusDD).whereLessThanOrEqualTo("day-time", stringPlusDD + "\uf8ff").get().addOnCompleteListener(task -> {
-            if (!task.isSuccessful()) {
-                Log.e("ReadDb", "Error: ", task.getException());
-                return;
-            }
-            List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
-            activityList.clear();
-
-            for (QueryDocumentSnapshot doc : task.getResult()) {
-
-                String raw = doc.getString("slot");
-                String name = doc.getString("name");
-                String phone1 = doc.getString("phone1");
-
-
-                if (raw == null || !raw.contains("-")) continue;
-
-                activityList.add(new TimeModel(uid, "", doc.getId(), raw, name, phone1, ""));
-
-
-                try {
-                    String[] parts = raw.split("-");
-                    LocalTime start = LocalTime.parse(parts[0].trim());
-                    LocalTime end = LocalTime.parse(parts[1].trim());
-                    timeSlots.add(new TimeSlotView.TimeSlot(start, end));
-                } catch (Exception e) {
-                    Log.w("Parse", "Invalid slot: " + raw);
-                }
-            }
-
-
-            timeSlotView.setBusySlots(timeSlots);
-            recyclerView.setLayoutManager(new GridLayoutManager(this, 1));
-            adapter = new BarberAdapter(this, activityList);
-            recyclerView.setAdapter(adapter);
-            progressBar.setVisibility(View.GONE);
-        });
-
-    }
-
+    // 🔹 TimeSlotView
     public static class TimeSlotView extends View {
         private List<TimeSlot> busy = new ArrayList<>();
-        private int startHour = 7;   // default qiymat
+        private int startHour = 7;
         private int endHour = 23;
-
         private final Paint slotPaint = new Paint();
         private final Paint labelPaint = new Paint();
         private final Paint linePaint = new Paint();
@@ -338,21 +383,17 @@ public class BarberActivity extends AppCompatActivity {
         public TimeSlotView(Context context, AttributeSet attrs, int defStyleAttr) {
             super(context, attrs, defStyleAttr);
 
-            // vaqt belgilari
             labelPaint.setColor(Color.parseColor("#37474F"));
             labelPaint.setTextSize(32f);
             labelPaint.setAntiAlias(true);
 
-            // soat liniyalari
             linePaint.setColor(Color.LTGRAY);
             linePaint.setStrokeWidth(2f);
 
-            // slot uchun effekt
             slotPaint.setAntiAlias(true);
             slotPaint.setShadowLayer(6f, 0, 2, Color.GRAY);
             setLayerType(LAYER_TYPE_SOFTWARE, slotPaint);
 
-            // fon gradyenti
             Shader shader = new LinearGradient(
                     0, 0, 0, getHeight(),
                     Color.parseColor("#FFFFFF"),
@@ -364,13 +405,7 @@ public class BarberActivity extends AppCompatActivity {
 
         public void setBusySlots(List<TimeSlot> list) {
             this.busy = list;
-            invalidate(); // qayta chiz
-        }
-
-        public void setStartHour(int startHour, int endHour) {
-            this.startHour = startHour;
-            this.endHour = endHour;
-            invalidate(); // qayta chiz
+            invalidate();
         }
 
         @Override
@@ -381,11 +416,8 @@ public class BarberActivity extends AppCompatActivity {
             if (totalMin <= 0) return;
 
             float slotH = (float) getHeight() / totalMin;
-
-            // fon
             canvas.drawRect(0, 0, getWidth(), getHeight(), bgPaint);
 
-            // busy slotlarni chizamiz
             slotPaint.setColor(Color.parseColor("#FFAB91"));
             for (TimeSlot slot : busy) {
                 float top = Duration.between(LocalTime.of(startHour, 0), slot.start).toMinutes() * slotH;
@@ -393,7 +425,6 @@ public class BarberActivity extends AppCompatActivity {
                 canvas.drawRoundRect(0, top, getWidth(), bottom, 24f, 24f, slotPaint);
             }
 
-            // soat liniyalari va vaqt yozuvlari
             for (int h = startHour; h <= endHour; h++) {
                 float y = (h - startHour) * 60 * slotH;
                 canvas.drawLine(0, y, getWidth(), y, linePaint);
@@ -401,37 +432,19 @@ public class BarberActivity extends AppCompatActivity {
             }
         }
 
-        // 🔹 model
-//        public static class TimeSlot {
-//            LocalTime start, end;
-//
-//            public TimeSlot(LocalTime s, LocalTime e) {
-//                start = s;
-//                end = e;
-//            }
-//        }
-
         public static class TimeSlot {
-            private LocalTime start;
-            private LocalTime end;
+            LocalTime start, end;
 
-            public TimeSlot(LocalTime start, LocalTime end) {
-                this.start = start;
-                this.end = end;
-            }
-
-            public LocalTime getStart() {
-                return start;
-            }
-
-            public LocalTime getEnd() {
-                return end;
+            public TimeSlot(LocalTime s, LocalTime e) {
+                start = s;
+                end = e;
             }
         }
     }
 
 
-    private void writeDb() {
+
+        private void writeDb() {
         String hourStr = hours.toString();
         String minuteStr = min.toString();
         String uid = mAuth.getCurrentUser().getUid();
@@ -464,8 +477,8 @@ public class BarberActivity extends AppCompatActivity {
         }
 
 
-        Log.d("hairTime", "Xatolik: 2 " + hairTime);
-        int endMinute = Integer.parseInt(minute + hairTime);
+        Log.d("hairTime", "Xatolik: 2 " + totalServiceTime  );
+        int endMinute = minute + totalServiceTime ;
         int endHour = hour + (endMinute >= 60 ? 1 : 0);
         endMinute = endMinute % 60;
 
@@ -476,79 +489,40 @@ public class BarberActivity extends AppCompatActivity {
 
         item.put("name", edit_spinner_name.getText().toString() + " sartarosh bandladi");
         item.put("customerUid", uid);
-//        item.put("phone", customerPhone);
         item.put("data", data);
         String stringPlusDD = String.format("%02d", plusDD);
         item.put("day-time", stringPlusDD);
 
 
-        db.collection("Barbers").document(uid).collection("Customer1").add(item).addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId())).addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
-//        NotificationHelper.showNotification(this, "Навбат банд этилди", data + " " + slot);
+        db.collection("Barbers").document(uid).collection("Customer1")
+                .add(item).addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId()))
+                .addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
+            totalServiceTime  = 0;
     }
 
-
-    public void showMaterialTimeBottomSheet(@Nullable TimeModel timeModel) {
-        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
-        View bottomSheetView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_time_picker, null, false);
-        bottomSheetDialog.setContentView(bottomSheetView);
-
-        spinner_min = bottomSheetView.findViewById(R.id.spinner_min);
-        spinner_hours = bottomSheetView.findViewById(R.id.spinner_hours);
-        edit_spinner_name = bottomSheetView.findViewById(R.id.edit_spinner_name);
-
-        // Spinner adapterlarini улаймиз
-        String[] spinner_hours_list = {"08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"};
-        SpinnerAdapter adapter_hours = new SpinnerAdapter(this, Arrays.asList(spinner_hours_list), R.layout.spinner);
-        spinner_hours.setAdapter(adapter_hours);
-
-        String[] spinner_min_list = {"00", "10", "20", "30", "40", "50"};
-        SpinnerAdapter adapter_min = new SpinnerAdapter(this, Arrays.asList(spinner_min_list), R.layout.spinner);
-        spinner_min.setAdapter(adapter_min);
-
-        // 🔹 Агар edit режимида бўлса → эски slot’дан соат/дақиқа ажратиб оламиз
-        if (timeModel != null) {
-            String slot = timeModel.getFirst(); // масалан: "09:20-09:50"
-            String getName = timeModel.getName();
-
-            edit_spinner_name.setText(getName);
-
-            String[] parts = slot.split("-");
-            if (parts.length > 0) {
-                String[] hm = parts[0].split(":");
-                if (hm.length == 2) {
-                    String oldHour = hm[0];
-                    String oldMinute = hm[1];
-
-                    int hourPos = Arrays.asList(spinner_hours_list).indexOf(oldHour);
-                    int minPos = Arrays.asList(spinner_min_list).indexOf(oldMinute);
-                    if (hourPos >= 0) spinner_hours.setSelection(hourPos);
-                    if (minPos >= 0) spinner_min.setSelection(minPos);
-                }
-            }
-        }
+        private void updateDb(TimeModel timeModel) {
+        String uid = mAuth.getCurrentUser().getUid();
 
 
-        // OK тугма
-        Button okButton = bottomSheetView.findViewById(R.id.btn_ok);
-        okButton.setOnClickListener(v -> {
-            String selectedHour = spinner_hours.getSelectedItem().toString();
-            String selectedMinute = spinner_min.getSelectedItem().toString();
-            hours = selectedHour;
-            min = selectedMinute;
+        int hour = Integer.parseInt(hours);
+        int minute = Integer.parseInt(min);
 
-            if (timeModel == null) {
-                Log.d("TAG14", "showMaterialTimeBottomSheet: 1 ");
-                writeDb();
-            } else {
-                Log.d("TAG14", "showMaterialTimeBottomSheet: 2 ");
-                updateDb(timeModel);
-            }
-            activityList.clear();
-            readDb();
-            bottomSheetDialog.dismiss();
-        });
+        int endMinute = Integer.parseInt(min) + totalServiceTime;
+        int endHour = hour + (endMinute >= 60 ? 1 : 0);
+        endMinute = endMinute % 60;
 
-        bottomSheetDialog.show();
+        String newSlot = String.format("%02d:%02d-%02d:%02d", hour, minute, endHour, endMinute);
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("slot", newSlot);
+        updates.put("name", edit_spinner_name.getText().toString() );
+
+
+        db.collection("Barbers").document(uid)
+                .collection("Customer1").document(timeModel.getDocId())
+                .update(updates)
+                .addOnSuccessListener(a -> Toast.makeText(this, "Slot таҳрирланди!", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Toast.makeText(this, "Xatolik: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
 
@@ -587,7 +561,6 @@ public class BarberActivity extends AppCompatActivity {
             intent.putExtra(Intent.EXTRA_TEXT,
                     "\n- Янги Сартарош иловаси" +
                             "\n- Онлайн навбат олиш имконияти!" +
-                            "\n- Севимли устангизни танланг" +
                             "\n- Вақтингизни тежанг" +
                             "\n- Барча сартарошлар ва мижозлар учун қулай платформа!" +
                             "\n " +
@@ -599,7 +572,8 @@ public class BarberActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    /// ---------------Bildirishnoma--------
+
+        /// ---------------Bildirishnoma--------
 
     private void checkNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -644,3 +618,582 @@ public class BarberActivity extends AppCompatActivity {
         }
     }
 }
+
+
+
+
+//public class BarberActivity extends AppCompatActivity {
+//    private static final int NOTIFICATION_PERMISSION_CODE = 101;
+//    private EditText editHour, editMinute;
+//    private Button addHourButton;
+//    private TimeSlotView timeSlotView;
+//    private RecyclerView recyclerView;
+//    private BarberAdapter adapter;
+//    private final List<TimeModel> activityList = new ArrayList<>();
+//    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+//    private FirebaseAuth mAuth;
+//    private ImageView userButton;
+//    Toolbar toolbar;
+//    TextView barbes_date_text, user_id, barbes_date;
+//    String barbershopId;
+//    String data, dd, mm, yy, min, hours;
+//    Spinner spinner_min, spinner_hours;
+//    TimeModel timeModel;
+//    String getName, getPhone1, userID, hairTime, beardTime, statDate;
+//    int clickPlusCount = 0, plusDD;
+//    ProgressBar progressBar;
+//    TextInputEditText edit_spinner_name;
+//
+//    @Override
+//    protected void onCreate(Bundle savedInstanceState) {
+//        super.onCreate(savedInstanceState);
+////        EdgeToEdge.enable(this);
+//        setContentView(R.layout.activity_barber);
+//
+//        barbershopId = SharedPreferencesUtil.getString(this, "BarbesID", "");
+//
+//        mAuth = FirebaseAuth.getInstance();
+//
+//
+//        initViews();
+//        addTimeSlotView();
+//
+//
+//        barbesReadDb(DateUtils.dateDDMMYY());
+//
+//    }
+
+
+//    private void updateDb(TimeModel timeModel) {
+//        String uid = mAuth.getCurrentUser().getUid();
+//
+//
+//        int hour = Integer.parseInt(hours);
+//        int minute = Integer.parseInt(min);
+////        String edit_spinner = edit_spinner_name.getText().toString();
+//
+//        int endMinute = Integer.parseInt(min) + Integer.parseInt(hairTime);
+//        int endHour = hour + (endMinute >= 60 ? 1 : 0);
+//        endMinute = endMinute % 60;
+//
+//        String newSlot = String.format("%02d:%02d-%02d:%02d", hour, minute, endHour, endMinute);
+//
+//        Map<String, Object> updates = new HashMap<>();
+//        updates.put("slot", newSlot);
+//        updates.put("name", edit_spinner_name.getText().toString() );
+//
+//
+//        db.collection("Barbers").document(uid)
+//                .collection("Customer1").document(timeModel.getDocId())
+//                .update(updates)
+//                .addOnSuccessListener(a -> Toast.makeText(this, "Slot таҳрирланди!", Toast.LENGTH_SHORT).show())
+//                .addOnFailureListener(e -> Toast.makeText(this, "Xatolik: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+//    }
+//
+//
+//    private void plusDate() {
+//        if (clickPlusCount <= 1) {
+//            clickPlusCount++;
+//            plusDD = Integer.parseInt(dd) + clickPlusCount;
+//            String date = DateUtils.datePlusDays(clickPlusCount);
+//            barbes_date.setText(date);
+//            Log.d("TAG5", "plusDate: " + date);
+//
+//            barbesReadDb(date);
+////            readDb();
+//        } else {
+//            Toast.makeText(this, "Keyingi sanaga o'tib bo'lmaydi", Toast.LENGTH_SHORT).show();
+//        }
+//    }
+//
+//    private void minusDate() {
+//        if (clickPlusCount >= 1) {
+//            clickPlusCount--;
+//            plusDD = Integer.parseInt(dd) + clickPlusCount;
+//            String date = DateUtils.datePlusDays(clickPlusCount);
+//            barbes_date.setText(date);
+//            Log.d("TAG5", "minusDate: " + plusDD);
+//
+//            barbesReadDb(date);
+////            readDb();
+//        } else {
+//            Toast.makeText(this, "Keyingi sanaga o'tib bo'lmaydi", Toast.LENGTH_SHORT).show();
+//        }
+//    }
+//
+//
+//    private void initViews() {
+//
+////        edit_spinner_name = findViewById(R.id.edit_spinner_name);
+//        barbes_date = findViewById(R.id.barbes_date);
+//        barbes_date_text = findViewById(R.id.barbes_date_text);
+//        progressBar = findViewById(R.id.progressBar);
+//        user_id = findViewById(R.id.user_id);
+//        recyclerView = findViewById(R.id.recycler);
+//
+//
+//
+//        toolbar = findViewById(R.id.toolbar);
+//        setSupportActionBar(toolbar);
+//
+//        findViewById(R.id.time_input).setOnClickListener(v -> showMaterialTimeBottomSheet(null));
+//
+//        dd = DateUtils.dateDD();
+//        mm = DateUtils.dateMM();
+//        yy = DateUtils.dateYYYY();
+//        data = DateUtils.dateDDMMYY();
+//
+//        barbes_date.setText(data);
+//        plusDD = Integer.parseInt(dd);
+//
+//        findViewById(R.id.minus_date).setOnClickListener(v -> minusDate());
+//
+//        findViewById(R.id.plus_date).setOnClickListener(v -> plusDate());
+//    }
+//
+//
+//    public void barbesReadDb(String selectedDate) {
+//        db.collection("Barbers").document(barbershopId)
+//                .get()
+//                .addOnSuccessListener(documentSnapshot -> {
+//                    if (!documentSnapshot.exists()) return;
+//
+//                    BarberProfile profile = documentSnapshot.toObject(BarberProfile.class);
+//                    if (profile == null) return;
+//
+//                    Log.e("readDb", "Xatolik: 1 " + profile.getUserID());
+//                    hairTime = profile.getHairTime();
+//                    beardTime = profile.getBeardTime();
+//                    String strictStartHour = profile.getStrictStartHour();
+//                    String strictEndHour = profile.getStrictEndHour();
+//
+//                    user_id.setText("ID " + profile.getUserID());
+//                    barbes_date_text.setText(profile.getName());
+//
+//                    if (profile.getUserID() == null || profile.getFcmToken() == null ||
+//                            profile.getHairTime() == null || profile.getBeardTime() == null || barbershopId == null) {
+//                        Log.e("readDb", "Xatolik: 2");
+//                        startActivity(new Intent(this, LoginActivity.class));
+//                        finish();
+//                        return;
+//                    }
+//
+//                    Log.d("TAG7", "date: 1 " + selectedDate);
+//                    boolean found = false;
+//
+//                    List<BarberMapModel> dateList = profile.getKey();
+//                    if (dateList != null && !dateList.isEmpty()) {
+//                        for (BarberMapModel entry : dateList) {
+//                            if (entry.getDate().equals(selectedDate)) {
+//                                int startHour = Integer.parseInt(entry.getStartHour());
+//                                int endHour = Integer.parseInt(entry.getEndHour());
+//
+//                                timeSlotView.setStartHour(startHour, endHour);
+//                                Log.d("TAG7", "Date: 2 " + selectedDate +
+//                                        " Start: " + startHour +
+//                                        " End: " + endHour);
+//
+//                                found = true;
+//                                break;
+//                            }
+//                        }
+//                    }
+//
+//                    // ️ Агар санани топа олмаса → strictStartHour / strictEndHour
+//                    if (!found) {
+//                        timeSlotView.setStartHour(
+//                                Integer.parseInt(strictStartHour),
+//                                Integer.parseInt(strictEndHour)
+//                        );
+//                        Log.d("TAG7", "Default strict hours qo‘llandi: " + strictStartHour + " - " + strictEndHour);
+//                    }
+//
+//                    // Ҳар доим busy slots қайта чизилади
+//                    readDb();
+//                })
+//                .addOnFailureListener(e -> Log.e("readDb", "Xatolik: " + e.getMessage()));
+//    }
+//
+//
+//    private void addTimeSlotView() {
+//
+//        FrameLayout container = findViewById(R.id.schedule_container_barber);
+//        timeSlotView = new TimeSlotView(this);
+//        container.addView(timeSlotView, new FrameLayout.LayoutParams((int) (getResources().getDisplayMetrics().density * 80), ViewGroup.LayoutParams.MATCH_PARENT));
+//    }
+//
+//
+//    public void readDb() {
+//
+//        String uid = mAuth.getCurrentUser().getUid();
+//
+//        progressBar.setVisibility(View.VISIBLE);
+//
+//        String stringPlusDD = String.format("%02d", plusDD);
+//        db.collection("Barbers").document(uid).collection("Customer1").whereGreaterThanOrEqualTo("day-time", stringPlusDD).whereLessThanOrEqualTo("day-time", stringPlusDD + "\uf8ff").get().addOnCompleteListener(task -> {
+//            if (!task.isSuccessful()) {
+//                Log.e("ReadDb", "Error: ", task.getException());
+//                return;
+//            }
+//            List<TimeSlotView.TimeSlot> timeSlots = new ArrayList<>();
+//            activityList.clear();
+//
+//            for (QueryDocumentSnapshot doc : task.getResult()) {
+//
+//                String raw = doc.getString("slot");
+//                String name = doc.getString("name");
+//                String phone1 = doc.getString("phone1");
+//
+//
+//                if (raw == null || !raw.contains("-")) continue;
+//
+//                activityList.add(new TimeModel(uid, "", doc.getId(), raw, name, phone1, ""));
+//
+//
+//                try {
+//                    String[] parts = raw.split("-");
+//                    LocalTime start = LocalTime.parse(parts[0].trim());
+//                    LocalTime end = LocalTime.parse(parts[1].trim());
+//                    timeSlots.add(new TimeSlotView.TimeSlot(start, end));
+//                } catch (Exception e) {
+//                    Log.w("Parse", "Invalid slot: " + raw);
+//                }
+//            }
+//
+//
+//            timeSlotView.setBusySlots(timeSlots);
+//            recyclerView.setLayoutManager(new GridLayoutManager(this, 1));
+//            adapter = new BarberAdapter(this, activityList);
+//            recyclerView.setAdapter(adapter);
+//            progressBar.setVisibility(View.GONE);
+//        });
+//
+//    }
+//
+//    public static class TimeSlotView extends View {
+//        private List<TimeSlot> busy = new ArrayList<>();
+//        private int startHour = 7;   // default qiymat
+//        private int endHour = 23;
+//
+//        private final Paint slotPaint = new Paint();
+//        private final Paint labelPaint = new Paint();
+//        private final Paint linePaint = new Paint();
+//        private final Paint bgPaint = new Paint();
+//
+//        public TimeSlotView(Context context) {
+//            this(context, null);
+//        }
+//
+//        public TimeSlotView(Context context, AttributeSet attrs) {
+//            this(context, attrs, 0);
+//        }
+//
+//        public TimeSlotView(Context context, AttributeSet attrs, int defStyleAttr) {
+//            super(context, attrs, defStyleAttr);
+//
+//            // vaqt belgilari
+//            labelPaint.setColor(Color.parseColor("#37474F"));
+//            labelPaint.setTextSize(32f);
+//            labelPaint.setAntiAlias(true);
+//
+//            // soat liniyalari
+//            linePaint.setColor(Color.LTGRAY);
+//            linePaint.setStrokeWidth(2f);
+//
+//            // slot uchun effekt
+//            slotPaint.setAntiAlias(true);
+//            slotPaint.setShadowLayer(6f, 0, 2, Color.GRAY);
+//            setLayerType(LAYER_TYPE_SOFTWARE, slotPaint);
+//
+//            // fon gradyenti
+//            Shader shader = new LinearGradient(
+//                    0, 0, 0, getHeight(),
+//                    Color.parseColor("#FFFFFF"),
+//                    Color.parseColor("#E0F7FA"),
+//                    Shader.TileMode.CLAMP
+//            );
+//            bgPaint.setShader(shader);
+//        }
+//
+//        public void setBusySlots(List<TimeSlot> list) {
+//            this.busy = list;
+//            invalidate(); // qayta chiz
+//        }
+//
+//        public void setStartHour(int startHour, int endHour) {
+//            this.startHour = startHour;
+//            this.endHour = endHour;
+//            invalidate(); // qayta chiz
+//        }
+//
+//        @Override
+//        protected void onDraw(Canvas canvas) {
+//            super.onDraw(canvas);
+//
+//            int totalMin = (endHour - startHour) * 60;
+//            if (totalMin <= 0) return;
+//
+//            float slotH = (float) getHeight() / totalMin;
+//
+//            // fon
+//            canvas.drawRect(0, 0, getWidth(), getHeight(), bgPaint);
+//
+//            // busy slotlarni chizamiz
+//            slotPaint.setColor(Color.parseColor("#FFAB91"));
+//            for (TimeSlot slot : busy) {
+//                float top = Duration.between(LocalTime.of(startHour, 0), slot.start).toMinutes() * slotH;
+//                float bottom = Duration.between(LocalTime.of(startHour, 0), slot.end).toMinutes() * slotH;
+//                canvas.drawRoundRect(0, top, getWidth(), bottom, 24f, 24f, slotPaint);
+//            }
+//
+//            // soat liniyalari va vaqt yozuvlari
+//            for (int h = startHour; h <= endHour; h++) {
+//                float y = (h - startHour) * 60 * slotH;
+//                canvas.drawLine(0, y, getWidth(), y, linePaint);
+//                canvas.drawText(String.format("%02d:00", h), 20, y + 30, labelPaint);
+//            }
+//        }
+//
+//        // 🔹 model
+////        public static class TimeSlot {
+////            LocalTime start, end;
+////
+////            public TimeSlot(LocalTime s, LocalTime e) {
+////                start = s;
+////                end = e;
+////            }
+////        }
+//
+//        public static class TimeSlot {
+//            private LocalTime start;
+//            private LocalTime end;
+//
+//            public TimeSlot(LocalTime start, LocalTime end) {
+//                this.start = start;
+//                this.end = end;
+//            }
+//
+//            public LocalTime getStart() {
+//                return start;
+//            }
+//
+//            public LocalTime getEnd() {
+//                return end;
+//            }
+//        }
+//    }
+//
+//
+//    private void writeDb() {
+//        String hourStr = hours.toString();
+//        String minuteStr = min.toString();
+//        String uid = mAuth.getCurrentUser().getUid();
+//
+//
+//        if (hourStr.isEmpty() || minuteStr.isEmpty()) return;
+//
+//        int hour = Integer.parseInt(hourStr);
+//        int minute = Integer.parseInt(minuteStr);
+//
+//        if (minute >= 60) {
+//            Toast.makeText(this, "Daqiqa noto‘g‘ri kiritilgan", Toast.LENGTH_SHORT).show();
+//            return;
+//        }
+//
+//        //  Hozirgi vaqt
+//        LocalDateTime now = LocalDateTime.now();
+//        int currentHour = now.getHour();
+//        int currentMinute = now.getMinute();
+//
+//        // Agar tanlangan sana bugungi kun bo‘lsa:
+//        String selectedDate = barbes_date.getText().toString(); // dd.MM.yyyy форматда
+//        String todayDate = DateUtils.dateDDMMYY();
+//
+//        if (selectedDate.equals(todayDate)) {
+//            if (hour < currentHour || (hour == currentHour && minute <= currentMinute)) {
+//                Toast.makeText(this, "O‘tgan vaqtga navbat olib bo‘lmaydi", Toast.LENGTH_SHORT).show();
+//                return; // yozmaymiz
+//            }
+//        }
+//
+//
+//        Log.d("hairTime", "Xatolik: 2 " + hairTime);
+//        int endMinute = Integer.parseInt(minute + hairTime);
+//        int endHour = hour + (endMinute >= 60 ? 1 : 0);
+//        endMinute = endMinute % 60;
+//
+//        String slot = String.format("%02d:%02d-%02d:%02d", hour, minute, endHour, endMinute);
+//
+//        Map<String, Object> item = new HashMap<>();
+//        item.put("slot", slot);
+//
+//        item.put("name", edit_spinner_name.getText().toString() + " sartarosh bandladi");
+//        item.put("customerUid", uid);
+////        item.put("phone", customerPhone);
+//        item.put("data", data);
+//        String stringPlusDD = String.format("%02d", plusDD);
+//        item.put("day-time", stringPlusDD);
+//
+//
+//        db.collection("Barbers").document(uid).collection("Customer1").add(item).addOnSuccessListener(doc -> Log.d("TAG", "Added: " + doc.getId())).addOnFailureListener(e -> Log.w("TAG", "Error adding", e));
+////        NotificationHelper.showNotification(this, "Навбат банд этилди", data + " " + slot);
+//    }
+//
+//
+//    public void showMaterialTimeBottomSheet(@Nullable TimeModel timeModel) {
+//        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+//        View bottomSheetView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_time_picker, null, false);
+//        bottomSheetDialog.setContentView(bottomSheetView);
+//
+//        spinner_min = bottomSheetView.findViewById(R.id.spinner_min);
+//        spinner_hours = bottomSheetView.findViewById(R.id.spinner_hours);
+//        edit_spinner_name = bottomSheetView.findViewById(R.id.edit_spinner_name);
+//
+//        // Spinner adapterlarini улаймиз
+//        String[] spinner_hours_list = {"08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"};
+//        SpinnerAdapter adapter_hours = new SpinnerAdapter(this, Arrays.asList(spinner_hours_list), R.layout.spinner);
+//        spinner_hours.setAdapter(adapter_hours);
+//
+//        String[] spinner_min_list = {"00", "10", "20", "30", "40", "50"};
+//        SpinnerAdapter adapter_min = new SpinnerAdapter(this, Arrays.asList(spinner_min_list), R.layout.spinner);
+//        spinner_min.setAdapter(adapter_min);
+//
+//        // 🔹 Агар edit режимида бўлса → эски slot’дан соат/дақиқа ажратиб оламиз
+//        if (timeModel != null) {
+//            String slot = timeModel.getFirst(); // масалан: "09:20-09:50"
+//            String getName = timeModel.getName();
+//
+//            edit_spinner_name.setText(getName);
+//
+//            String[] parts = slot.split("-");
+//            if (parts.length > 0) {
+//                String[] hm = parts[0].split(":");
+//                if (hm.length == 2) {
+//                    String oldHour = hm[0];
+//                    String oldMinute = hm[1];
+//
+//                    int hourPos = Arrays.asList(spinner_hours_list).indexOf(oldHour);
+//                    int minPos = Arrays.asList(spinner_min_list).indexOf(oldMinute);
+//                    if (hourPos >= 0) spinner_hours.setSelection(hourPos);
+//                    if (minPos >= 0) spinner_min.setSelection(minPos);
+//                }
+//            }
+//        }
+//
+//
+//        // OK тугма
+//        Button okButton = bottomSheetView.findViewById(R.id.btn_ok);
+//        okButton.setOnClickListener(v -> {
+//            String selectedHour = spinner_hours.getSelectedItem().toString();
+//            String selectedMinute = spinner_min.getSelectedItem().toString();
+//            hours = selectedHour;
+//            min = selectedMinute;
+//
+//            if (timeModel == null) {
+//                Log.d("TAG14", "showMaterialTimeBottomSheet: 1 ");
+//                writeDb();
+//            } else {
+//                Log.d("TAG14", "showMaterialTimeBottomSheet: 2 ");
+//                updateDb(timeModel);
+//            }
+//            activityList.clear();
+//            readDb();
+//            bottomSheetDialog.dismiss();
+//        });
+//
+//        bottomSheetDialog.show();
+//    }
+//
+//
+//
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        getMenuInflater().inflate(R.menu.menu_profil, menu);
+//        return true;
+//    }
+//
+//    @Override
+//    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+//        int id = item.getItemId();
+//
+//        if (id == R.id.action_profile) {
+//
+//            startActivity(new Intent(BarberActivity.this, EditProfileActivity.class));
+//            return true;
+//        } else if (id == R.id.action_logout) {
+//            FirebaseAuth.getInstance().signOut();
+//            GoogleSignIn.getClient(this, new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestIdToken(getString(R.string.default_web_client_id)).requestEmail().build()).signOut();
+//
+//            SharedPreferences.Editor editor = getSharedPreferences("app_prefs", MODE_PRIVATE).edit();
+//            editor.clear().apply();
+//
+//            Intent intent = new Intent(this, MainActivity.class);
+//            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+//            startActivity(intent);
+//            finish();
+//            return true;
+//        } else if (id == R.id.notification) {
+//            checkNotificationPermission();
+//        }  else if (id == R.id.share_app) {
+//            Intent intent = new Intent();
+//            intent.setAction(Intent.ACTION_SEND);
+//            intent.putExtra(Intent.EXTRA_TEXT,
+//                    "\n- Янги Сартарош иловаси" +
+//                            "\n- Онлайн навбат олиш имконияти!" +
+//                            "\n- Севимли устангизни танланг" +
+//                            "\n- Вақтингизни тежанг" +
+//                            "\n- Барча сартарошлар ва мижозлар учун қулай платформа!" +
+//                            "\n " +
+//                            "\nhttps://play.google.com/store/apps/details?id=com.bc.sartarosh");
+//            intent.setType("text/plain");
+//            startActivity(intent);
+//        }
+//
+//        return super.onOptionsItemSelected(item);
+//    }
+//
+//    /// ---------------Bildirishnoma--------
+//
+//    private void checkNotificationPermission() {
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+//            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+//                // Permission берилган — хабар юбориш
+//                NotificationHelper.showNotification(this, "Салом!", "Сизда билдиришномалар фаоллаштирилди. Энди бемалол фойдаланишингиз мумкин!");
+//            } else if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+//                // Рухсат олдин рад этилган, тушунтириш бериш мумкин
+//                showRationaleDialog();
+//            } else {
+//                // Биринчи марта ёки "Don't ask again" танланган
+//                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_CODE);
+//            }
+//        } else {
+//            // Android 12 ёки паст — permission керак эмас
+//            NotificationHelper.showNotification(this, "Sizda bildirishnoma yoqilgan!", "");
+//        }
+//    }
+//
+//    private void showRationaleDialog() {
+//        new AlertDialog.Builder(this).setTitle("Билдиришномалар учун рухсат").setMessage("Илованинг билдиришнома чиқариши учун рухсат керак. Рухсатни қайта ёқиш учун илова созламаларига ўтинг.").setPositiveButton("Созламаларга ўтиш", (dialog, which) -> {
+//            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+//            Uri uri = Uri.fromParts("package", getPackageName(), null);
+//            intent.setData(uri);
+//            startActivity(intent);
+//        }).setNegativeButton("Бекор қилиш", null).show();
+//    }
+//
+//    // Permission натижасини қабул қилиш
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+//
+//        if (requestCode == NOTIFICATION_PERMISSION_CODE) {
+//            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                // Рухсат берилди
+//                NotificationHelper.showNotification(this, "Салом!", "Сизда билдиришномалар фаоллаштирилди. Энди улардан бемалол фойдаланинг!");
+//            } else {
+//                // Рухсат берилмади
+//                showRationaleDialog(); // Фойдаланувчига оғоҳлантириш
+//            }
+//        }
+//    }
+//}

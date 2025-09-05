@@ -1,5 +1,6 @@
 package com.bc.sartarosh.profil;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.view.LayoutInflater;
@@ -41,7 +42,7 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, @SuppressLint("RecyclerView") int position) {
 
 
         String BarbersId = activityllist.get(position).getBarbersId();
@@ -89,7 +90,9 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
                                 });
 
                         activityllist.clear();
-                        barberActivity.readDb();
+                        barberActivity.readDb(barberActivity.getSelectedDate());
+//                        activityllist.clear();
+//                        barberActivity.readDb();
                     }
                 });
                 builder.setNegativeButton("Yo'q", null);
@@ -132,3 +135,4 @@ public class BarberAdapter extends RecyclerView.Adapter< RecyclerView.ViewHolder
 
 
 }
+

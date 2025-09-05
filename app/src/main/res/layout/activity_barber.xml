@@ -127,7 +127,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@id/schedule_container_barber"
@@ -135,11 +135,19 @@
 
         <Button
             android:id="@+id/time_input"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:backgroundTint="@color/white"
             android:elevation="8dp"
             android:text="Navbat olish"
+            android:textColor="@color/purple_500"/>
+        <Button
+            android:id="@+id/time_input2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/white"
+            android:elevation="8dp"
+            android:text="Band vaqtlar"
             android:textColor="@color/purple_500"/>
     </LinearLayout>
 

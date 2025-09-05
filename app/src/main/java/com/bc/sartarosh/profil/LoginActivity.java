@@ -274,6 +274,7 @@ public class LoginActivity extends AppCompatActivity {
                             profile.put("address", address);
                             profile.put("hairTime", "40");
                             profile.put("beardTime", "20");
+                            profile.put("childrenTime", "30");
                             profile.put("strictStartHour", "8");
                             profile.put("strictEndHour", "20");
                             nestedData.put("date", "");

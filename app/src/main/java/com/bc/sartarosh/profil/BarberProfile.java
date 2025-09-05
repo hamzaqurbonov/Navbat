@@ -3,14 +3,14 @@ package com.bc.sartarosh.profil;
 import java.util.List;
 
 public class BarberProfile {
-    private String name, phone1, phone2, province, region, address, userID, fcmToken, hairTime, beardTime, strictEndHour, strictStartHour;
+    private String name, phone1, phone2, province, region, address, userID, fcmToken, hairTime, beardTime, strictEndHour, strictStartHour, childrenTime;
     private List<BarberMapModel> key;
 
 
     public BarberProfile() {
     }
 
-    public BarberProfile(String name, String phone1, String phone2, String province, String region, String address, String userID, String fcmToken, String hairTime, String beardTime, String strictEndHour, String strictStartHour) {
+    public BarberProfile(String name, String phone1, String phone2, String province, String region, String address, String userID, String fcmToken, String hairTime, String beardTime, String strictEndHour, String strictStartHour,String childrenTime) {
         this.name = name;
         this.phone1 = phone1;
         this.phone2 = phone2;
@@ -23,6 +23,7 @@ public class BarberProfile {
         this.beardTime = beardTime;
         this.strictStartHour = strictStartHour;
         this.strictEndHour = strictEndHour;
+        this.childrenTime = childrenTime;
     }
 
     public String getName() {
@@ -76,7 +77,9 @@ public class BarberProfile {
     public String getStrictStartHour() {
         return strictStartHour;
     }
-
+    public String getChildrenTime() {
+        return childrenTime;
+    }
     public List<BarberMapModel> getKey() {
         return key;
     }

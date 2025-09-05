@@ -24,6 +24,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -91,9 +92,10 @@ public class CustomerActivity extends AppCompatActivity {
     private String barbershopId, customerId, customerName, customerPhone, barberUserID;
     TextView barbes_date_text, date_text, user_id, barbes_date;
     Spinner spinner_min, spinner_hours;
-    String getName, getPhone1, getPhone2, userID, fcmToken, hairTime, beardTime;
+    String getName, getPhone1, getPhone2, userID, fcmToken, hairTime, beardTime, childrenTime;
     int clickPlusCount = 0, plusDD;
     ProgressBar progressBar;
+    int totalServiceTime = 0;
     private List<TimeSlotView.TimeSlot> busySlots = new ArrayList<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -188,6 +190,7 @@ public class CustomerActivity extends AppCompatActivity {
                         Log.e("readDb", "Xatolik: 1 " + profile.getUserID());
                         hairTime = profile.getHairTime();
                         beardTime = profile.getBeardTime();
+                        childrenTime = profile.getChildrenTime();
                         String strictStartHour = profile.getStrictStartHour();
                         String strictEndHour = profile.getStrictEndHour();
 
@@ -288,7 +291,7 @@ public class CustomerActivity extends AppCompatActivity {
             }
         }
 
-        int endMinute = startMinute + Integer.parseInt(hairTime);
+        int endMinute = startMinute + totalServiceTime;
         int endHour = hour + (endMinute >= 60 ? 1 : 0);
         endMinute = endMinute % 60;
 
@@ -327,7 +330,7 @@ public class CustomerActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> Log.e("TAG", "Xatolik: " + e.getMessage()));
-
+        totalServiceTime = 0;
     }
 
 public void ReadDb() {
@@ -494,6 +497,10 @@ public void ReadDb() {
         View bottomSheetView = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_time_picker, null, false);
         bottomSheetDialog.setContentView(bottomSheetView);
 
+        CheckBox checkSoch = bottomSheetView.findViewById(R.id.check_soch);
+        CheckBox checkSoqol = bottomSheetView.findViewById(R.id.check_soqol);
+        CheckBox checkBola = bottomSheetView.findViewById(R.id.check_bola);
+
         // Spinner'ни view орқали оламиз (ЭЪТИБОР БЕРИН!)
         spinner_min = bottomSheetView.findViewById(R.id.spinner_min);
         spinner_hours = bottomSheetView.findViewById(R.id.spinner_hours);
@@ -531,6 +538,12 @@ public void ReadDb() {
         Button okButton = bottomSheetView.findViewById(R.id.btn_ok);
         if (okButton != null) {
             okButton.setOnClickListener(v -> {
+                if (checkSoch.isChecked())  totalServiceTime += Integer.parseInt(hairTime);
+                if (checkSoqol.isChecked()) totalServiceTime += Integer.parseInt(beardTime);
+                if (checkBola.isChecked())  totalServiceTime += Integer.parseInt(childrenTime);
+
+
+
                 customerReadDb();
                 bottomSheetDialog.dismiss();
             });
@@ -680,7 +693,6 @@ public void ReadDb() {
             intent.putExtra(Intent.EXTRA_TEXT,
                     "\n- Янги Сартарош иловаси" +
                     "\n- Онлайн навбат олиш имконияти!" +
-                    "\n- Севимли устангизни танланг" +
                     "\n- Вақтингизни тежанг" +
                     "\n- Барча сартарошлар ва мижозлар учун қулай платформа!" +
                     "\n " +

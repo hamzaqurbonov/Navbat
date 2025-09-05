@@ -21,9 +21,35 @@
             android:layout_marginStart="2dp"
             android:layout_marginTop="16dp"
             android:layout_marginBottom="8dp"
-            android:text="Soatni tanlang"
+            android:text="Xizmat turini tanlang"
             android:textSize="13sp"
             android:textStyle="italic" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:layout_marginTop="12dp">
+
+            <CheckBox
+                android:id="@+id/check_soch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="Soch olish" />
+
+            <CheckBox
+                android:id="@+id/check_soqol"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Soqol olish" />
+
+            <CheckBox
+                android:id="@+id/check_bola"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bolalar sochini olish" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -83,3 +109,59 @@
     </LinearLayout>
 
 </LinearLayout>
+
+
+
+
+    <!--        <TextView-->
+    <!--            android:layout_width="wrap_content"-->
+    <!--            android:layout_height="wrap_content"-->
+    <!--            android:layout_marginStart="2dp"-->
+    <!--            android:layout_marginTop="16dp"-->
+    <!--            android:layout_marginBottom="8dp"-->
+    <!--            android:text="Soqol olish soatni tanlang"-->
+    <!--            android:textSize="13sp"-->
+    <!--            android:textStyle="italic" />-->
+
+    <!--        <LinearLayout-->
+    <!--            android:layout_width="match_parent"-->
+    <!--            android:layout_height="wrap_content"-->
+    <!--            android:gravity="center"-->
+    <!--            android:orientation="horizontal">-->
+
+    <!--            <com.google.android.material.textfield.TextInputLayout-->
+    <!--                android:id="@+id/edit_spinner_name_beard_1"-->
+    <!--                android:layout_width="150dp"-->
+    <!--                android:layout_height="wrap_content"-->
+    <!--                app:boxBackgroundMode="none"-->
+    <!--                app:boxStrokeColor="@color/purple_500">-->
+
+    <!--                <com.google.android.material.textfield.TextInputEditText-->
+    <!--                    android:id="@+id/edit_spinner_name_beard"-->
+    <!--                    android:layout_width="match_parent"-->
+    <!--                    android:layout_height="wrap_content"-->
+    <!--                    android:hint="Isim" />-->
+    <!--            </com.google.android.material.textfield.TextInputLayout>-->
+
+    <!--            <Spinner-->
+    <!--                android:id="@+id/spinner_hours_beard"-->
+    <!--                android:layout_width="wrap_content"-->
+    <!--                android:layout_height="wrap_content"-->
+    <!--                android:background="@drawable/spinner_no_arrow"-->
+    <!--                android:layout_marginStart="8dp"-->
+    <!--                android:elevation="16dp" />-->
+
+    <!--            <TextView-->
+    <!--                android:layout_width="wrap_content"-->
+    <!--                android:layout_height="wrap_content"-->
+    <!--                android:text="  :  "-->
+    <!--                android:textSize="32sp"-->
+    <!--                android:textStyle="bold" />-->
+
+    <!--            <Spinner-->
+    <!--                android:id="@+id/spinner_min_beard"-->
+    <!--                android:layout_width="wrap_content"-->
+    <!--                android:layout_height="wrap_content"-->
+    <!--                android:background="@drawable/spinner_no_arrow"-->
+    <!--                android:elevation="16dp" />-->
+    <!--        </LinearLayout>-->

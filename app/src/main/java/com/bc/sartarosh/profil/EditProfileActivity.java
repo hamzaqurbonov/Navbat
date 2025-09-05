@@ -33,7 +33,7 @@ import java.util.Map;
 public class EditProfileActivity extends AppCompatActivity {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private EditText edit_name, edit_address, edit_phone, edit_phone2, edit_hair_time, edit_beard_time, edit_strictStartHour, edit_strictEndHour;
+    private EditText edit_name, edit_address, edit_phone, edit_phone2, edit_hair_time, edit_beard_time, edit_children_time, edit_strictStartHour, edit_strictEndHour;
     private Spinner spinner_oblast, spinner_region;
 
     private String customerId, barbesId, docType, userID, fcmToken;
@@ -67,6 +67,7 @@ public class EditProfileActivity extends AppCompatActivity {
             edit_address.setVisibility(View.GONE);
             edit_hair_time.setVisibility(View.GONE);
             edit_beard_time.setVisibility(View.GONE);
+            edit_children_time.setVisibility(View.GONE);
             edit_strictStartHour.setVisibility(View.GONE);
             edit_strictEndHour.setVisibility(View.GONE);
 
@@ -100,6 +101,7 @@ public class EditProfileActivity extends AppCompatActivity {
         spinner_region = findViewById(R.id.spinner_region);
         edit_hair_time = findViewById(R.id.edit_hair_time);
         edit_beard_time = findViewById(R.id.edit_beard_time);
+        edit_children_time = findViewById(R.id.edit_children_time);
         edit_strictStartHour = findViewById(R.id.edit_strictStartHour);
         edit_strictEndHour = findViewById(R.id.edit_strictEndHour);
 
@@ -150,6 +152,7 @@ public class EditProfileActivity extends AppCompatActivity {
                     edit_phone2.setText(profile.getPhone2());
                     edit_hair_time.setText(profile.getHairTime());
                     edit_beard_time.setText(profile.getBeardTime());
+                    edit_children_time.setText(profile.getChildrenTime());
                     edit_strictStartHour.setText(profile.getStrictStartHour());
                     edit_strictEndHour.setText(profile.getStrictEndHour());
                     userID = profile.getUserID();
@@ -201,6 +204,7 @@ public class EditProfileActivity extends AppCompatActivity {
             profile.put("address", edit_address.getText().toString());
             profile.put("hairTime", edit_hair_time.getText().toString());
             profile.put("beardTime", edit_beard_time.getText().toString());
+            profile.put("childrenTime", edit_children_time.getText().toString());
             profile.put("strictStartHour", edit_strictStartHour.getText().toString());
             profile.put("strictEndHour", edit_strictEndHour.getText().toString());
 
